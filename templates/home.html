@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Головна{% endblock %}
+
+{% block content %}
+<h1>Назва</h1>
+<p>Ласкаво просимо до Назва! Тут ви бла-бла-бла...........</p>
+
+<h2>Останні курси</h2>
+{% if latest_courses %}
+    <ul>
+        {% for course in latest_courses %}
+            <li>
+                <a href="{{ course.get_absolute_url }}">{{ course.title }}</a>
+                — {{ course.author.get_full_name|default:course.author.username }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Курсів поки що немає.</p>
+{% endif %}
+
+<p><a href="{% url 'course_list' %}">Переглянути всі курси</a></p>
+{% endblock %}

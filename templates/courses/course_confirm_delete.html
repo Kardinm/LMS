@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Видалити курс{% endblock %}
+
+{% block content %}
+<h1>Видалити курс</h1>
+<p>Ви впевнені, що хочете видалити курс "<strong>{{ object.title }}</strong>"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Так, видалити</button>
+    <a href="{% url 'course_detail' object.pk %}">Скасувати</a>
+</form>
+{% endblock %}

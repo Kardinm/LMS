@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Редагувати курс{% else %}Створити курс{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Редагувати курс{% else %}Створити новий курс{% endif %}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if object %}Зберегти зміни{% else %}Створити{% endif %}</button>
+</form>
+<p><a href="{% url 'course_list' %}">← Назад до списку курсів</a></p>
+{% endblock %}
