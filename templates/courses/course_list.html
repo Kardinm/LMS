@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Курси</h1>
 
-{% if user.is_authenticated and user.is_admin_role %}
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
     <p><a href="{% url 'course_create' %}">Створити новий курс</a></p>
 {% endif %}
 
@@ -15,7 +15,7 @@
             <li>
                 <a href="{{ course.get_absolute_url }}">{{ course.title }}</a>
                 — {{ course.author.get_full_name|default:course.author.username }}
-                {% if user.is_authenticated and user.is_admin_role %}
+                {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
                     | <a href="{% url 'course_update' course.pk %}">Редагувати</a>
                     | <a href="{% url 'course_delete' course.pk %}">Видалити</a>
                 {% endif %}

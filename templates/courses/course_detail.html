@@ -11,21 +11,45 @@
 
 <h2>Модулі</h2>
 {% if course.modules.all %}
-    <ol>
-        {% for module in course.modules.all %}
-            <li>
-                <strong>{{ module.title }}</strong>
-                {% if module.description %}
-                    <p>{{ module.description }}</p>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ol>
+    {% for module in course.modules.all %}
+        <div style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+            <h3>{{ module.order }}. {{ module.title }}</h3>
+            {% if module.description %}
+                <p>{{ module.description }}</p>
+            {% endif %}
+
+            <h4>Уроки:</h4>
+            {% if module.lessons.all %}
+                <ol>
+                    {% for lesson in module.lessons.all %}
+                        <li>
+                            <a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a>
+                            {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                                <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати</a>
+                                <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити</a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <p>Уроків поки що немає.</p>
+            {% endif %}
+
+            {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                <p><a href="{% url 'lesson_create' course.pk module.pk %}">+ Додати урок</a></p>
+                <p>
+                    <a href="{% url 'module_update' course.pk module.pk %}">Редагувати модуль</a>
+                    <a href="{% url 'module_delete' course.pk module.pk %}">Видалити модуль</a>
+                </p>
+            {% endif %}
+        </div>
+    {% endfor %}
 {% else %}
     <p>Модулів поки що немає.</p>
 {% endif %}
 
-{% if user.is_authenticated and user.is_admin_role %}
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <p><a href="{% url 'module_create' course.pk %}">+ Додати модуль</a></p>
     <p>
         <a href="{% url 'course_update' course.pk %}">Редагувати курс</a> |
         <a href="{% url 'course_delete' course.pk %}">Видалити курс</a>

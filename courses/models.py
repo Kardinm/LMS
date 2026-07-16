@@ -46,3 +46,33 @@ class Module(models.Model):
 
     def __str__(self):
         return f"{self.order}. {self.title}"
+    
+
+class Lesson(models.Model):
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        related_name='lessons',
+        verbose_name='Модуль'
+    )
+    title = models.CharField(max_length=255, verbose_name='Назва уроку')
+    content = models.TextField(blank=True, verbose_name='Текстовий контент')
+    video_url = models.URLField(blank=True, verbose_name='Посилання на відео')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = 'Урок'
+        verbose_name_plural = 'Уроки'
+
+    def __str__(self):
+        return f"{self.order}. {self.title}"
+
+    def get_absolute_url(self):
+        return reverse('lesson_detail', kwargs={
+            'course_pk': self.module.course.pk,
+            'module_pk': self.module.pk,
+            'lesson_pk': self.pk
+        })

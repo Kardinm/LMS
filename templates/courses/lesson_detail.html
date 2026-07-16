@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson.title }}{% endblock %}
+
+{% block content %}
+<p><a href="{{ course.get_absolute_url }}">← Назад до курсу {{ course.title }}</a></p>
+
+<h1>{{ lesson.title }}</h1>
+<p><strong>Модуль:</strong> {{ module.title }}</p>
+
+{% if lesson.video_url %}
+    <p><strong>Відео:</strong></p>
+    <p><a href="{{ lesson.video_url }}" target="_blank">{{ lesson.video_url }}</a></p>
+{% endif %}
+
+{% if lesson.content %}
+    <h2>Контент</h2>
+    <div>{{ lesson.content|linebreaks }}</div>
+{% endif %}
+
+<hr>
+
+<div>
+    {% if prev_lesson %}
+        <a href="{{ prev_lesson.get_absolute_url }}">← Попередній урок: {{ prev_lesson.title }}</a>
+    {% else %}
+        <span>← Попереднього уроку немає</span>
+    {% endif %}
+
+    <span> | </span>
+
+    {% if next_lesson %}
+        <a href="{{ next_lesson.get_absolute_url }}">Наступний урок: {{ next_lesson.title }} →</a>
+    {% else %}
+        <span>Наступного уроку немає →</span>
+    {% endif %}
+</div>
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <hr>
+    <p>
+        <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати урок</a> |
+        <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити урок</a>
+    </p>
+{% endif %}
+{% endblock %}

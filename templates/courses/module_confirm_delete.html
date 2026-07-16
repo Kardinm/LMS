@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Видалити модуль{% endblock %}
+
+{% block content %}
+<h1>Видалити модуль</h1>
+<p>Ви впевнені, що хочете видалити модуль "<strong>{{ object.title }}</strong>" з курсу "{{ object.course.title }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Так, видалити</button>
+    <a href="{{ object.course.get_absolute_url }}">Скасувати</a>
+</form>
+{% endblock %}
+
