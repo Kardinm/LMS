@@ -1,10 +1,6 @@
 from django.urls import path
 
-from .views import (
-    CourseListView, CourseDetailView, CourseCreateView, CourseUpdateView, CourseDeleteView,
-    ModuleCreateView, ModuleUpdateView, ModuleDeleteView,
-    LessonCreateView, LessonDetailView, LessonUpdateView, LessonDeleteView
-)
+from .views import *
 
 
 urlpatterns = [
@@ -22,4 +18,12 @@ urlpatterns = [
     path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/', LessonDetailView.as_view(), name='lesson_detail'),
     path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/edit/', LessonUpdateView.as_view(), name='lesson_update'),
     path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/delete/', LessonDeleteView.as_view(), name='lesson_delete'),
+
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/add/', AssignmentCreateView.as_view(), name='assignment_create'),
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/', AssignmentDetailView.as_view(), name='assignment_detail'),
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/edit/', AssignmentUpdateView.as_view(), name='assignment_update'),
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/delete/', AssignmentDeleteView.as_view(), name='assignment_delete'),
+    
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submit/', SubmissionCreateView.as_view(), name='submission_create'),
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submission/<int:submission_pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
 ]

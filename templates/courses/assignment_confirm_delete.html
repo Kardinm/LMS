@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Видалити завдання{% endblock %}
+
+{% block content %}
+<h1>Видалити завдання</h1>
+<p>Ви впевнені, що хочете видалити завдання "<strong>{{ object.title }}</strong>" з уроку "{{ object.lesson.title }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Так, видалити</button>
+    <a href="{{ object.get_absolute_url }}">Скасувати</a>
+</form>
+{% endblock %}

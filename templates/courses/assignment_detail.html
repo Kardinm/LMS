@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }}{% endblock %}
+
+{% block content %}
+<p>
+    <a href="{{ lesson.get_absolute_url }}">← Назад до уроку {{ lesson.title }}</a>
+</p>
+
+<h1>{{ assignment.title }}</h1>
+<p><strong>Урок:</strong> {{ lesson.title }}</p>
+<p><strong>Модуль:</strong> {{ module.title }}</p>
+<p><strong>Курс:</strong> {{ course.title }}</p>
+
+{% if assignment.description %}
+    <h2>Опис завдання</h2>
+    <div>{{ assignment.description|linebreaks }}</div>
+{% endif %}
+
+{% if assignment.deadline %}
+    <p><strong>Дедлайн:</strong> {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
+{% endif %}
+<p><strong>Максимальний бал:</strong> {{ assignment.max_score }}</p>
+
+<hr>
+
+{% if user.is_authenticated and user.is_student %}
+    <h2>Ваша відповідь</h2>
+    {% if my_submission %}
+        <p>Ви вже здали це завдання.</p>
+        <p><strong>Дата здачі:</strong> {{ my_submission.submitted_at|date:"d.m.Y H:i" }}</p>
+        {% if my_submission.text %}
+            <p><strong>Текст:</strong></p>
+            <div>{{ my_submission.text|linebreaks }}</div>
+        {% endif %}
+        {% if my_submission.file %}
+            <p><strong>Файл:</strong> <a href="{{ my_submission.file.url }}">Завантажити</a></p>
+        {% endif %}
+        <p>
+            <a href="{% url 'submission_detail' course.pk module.pk lesson.pk assignment.pk my_submission.pk %}">
+                Переглянути повну відповідь
+            </a>
+        </p>
+    {% else %}
+        <p>Ви ще не здали це завдання.</p>
+        <p><a href="{% url 'submission_create' course.pk module.pk lesson.pk assignment.pk %}">Здати завдання</a></p>
+    {% endif %}
+{% endif %}
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <hr>
+    <p>
+        <a href="{% url 'assignment_update' course.pk module.pk lesson.pk assignment.pk %}">Редагувати завдання</a> |
+        <a href="{% url 'assignment_delete' course.pk module.pk lesson.pk assignment.pk %}">Видалити завдання</a>
+    </p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Здати завдання{% endblock %}
+
+{% block content %}
+<h1>Здати завдання</h1>
+<p><strong>Завдання:</strong> {{ assignment.title }}</p>
+<p><strong>Урок:</strong> {{ lesson.title }}</p>
+<p><strong>Курс:</strong> {{ course.title }}</p>
+
+{% if assignment.deadline %}
+    <p><strong>Дедлайн:</strong> {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
+{% endif %}
+
+<hr>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Відправити відповідь</button>
+</form>
+
+<p><a href="{{ assignment.get_absolute_url }}">← Назад до завдання</a></p>
+{% endblock %}

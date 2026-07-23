@@ -1,5 +1,5 @@
 from django import forms
-from .models import Course, Module, Lesson
+from .models import Course, Module, Lesson, Assignment, Submission
 
 
 class CourseForm(forms.ModelForm):
@@ -27,4 +27,23 @@ class LessonForm(forms.ModelForm):
         widgets = {
             'content': forms.Textarea(attrs={'rows': 8}),
             'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/...'}),
+        }
+
+
+class AssignmentForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ['title', 'description', 'deadline', 'max_score']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
+            'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+
+class SubmissionForm(forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ['text', 'file']
+        widgets = {
+            'text': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Ваша відповідь...'}),
         }

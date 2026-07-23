@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Моя відповідь{% endblock %}
+
+{% block content %}
+<h1>Моя відповідь</h1>
+<p><strong>Завдання:</strong> {{ submission.assignment.title }}</p>
+<p><strong>Урок:</strong> {{ submission.assignment.lesson.title }}</p>
+<p><strong>Курс:</strong> {{ submission.assignment.lesson.module.course.title }}</p>
+<p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>
+
+{% if submission.text %}
+    <h2>Текстова відповідь</h2>
+    <div>{{ submission.text|linebreaks }}</div>
+{% endif %}
+
+{% if submission.file %}
+    <h2>Файл</h2>
+    <p><a href="{{ submission.file.url }}">Завантажити файл</a></p>
+{% endif %}
+
+<p><a href="{{ submission.assignment.get_absolute_url }}">← Назад до завдання</a></p>
+{% endblock %}

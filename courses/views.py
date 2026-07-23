@@ -5,8 +5,9 @@ from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 )
 from django.contrib import messages
-from .models import Course, Module, Lesson
-from .forms import CourseForm, ModuleForm, LessonForm
+
+from .models import Course, Module, Lesson, Assignment, Submission
+from .forms import CourseForm, ModuleForm, LessonForm, AssignmentForm, SubmissionForm
 
 
 class TeacherOrAdminRequiredMixin(UserPassesTestMixin):
@@ -206,3 +207,138 @@ class LessonDeleteView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, DeleteVi
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Урок видалено!')
         return super().delete(request, *args, **kwargs)
+    
+
+class AssignmentDetailView(DetailView):
+    model = Assignment
+    template_name = 'courses/assignment_detail.html'
+    context_object_name = 'assignment'
+    pk_url_kwarg = 'assignment_pk'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        assignment = self.object
+        lesson = assignment.lesson
+        module = lesson.module
+        course = module.course
+        context['lesson'] = lesson
+        context['module'] = module
+        context['course'] = course
+
+        if self.request.user.is_authenticated:
+            try:
+                context['my_submission'] = Submission.objects.get(
+                    assignment=assignment, student=self.request.user
+                )
+            except Submission.DoesNotExist:
+                context['my_submission'] = None
+
+        return context
+
+
+class AssignmentCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+    model = Assignment
+    form_class = AssignmentForm
+    template_name = 'courses/assignment_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.lesson = get_object_or_404(Lesson, pk=self.kwargs['lesson_pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.lesson = self.lesson
+        messages.success(self.request, 'Завдання створено!')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lesson'] = self.lesson
+        context['module'] = self.lesson.module
+        context['course'] = self.lesson.module.course
+        return context
+
+
+class AssignmentUpdateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, UpdateView):
+    model = Assignment
+    form_class = AssignmentForm
+    template_name = 'courses/assignment_form.html'
+    pk_url_kwarg = 'assignment_pk'
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Завдання оновлено!')
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lesson'] = self.object.lesson
+        context['module'] = self.object.lesson.module
+        context['course'] = self.object.lesson.module.course
+        return context
+
+
+class AssignmentDeleteView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, DeleteView):
+    model = Assignment
+    template_name = 'courses/assignment_confirm_delete.html'
+    pk_url_kwarg = 'assignment_pk'
+
+    def get_success_url(self):
+        return self.object.lesson.get_absolute_url()
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Завдання видалено!')
+        return super().delete(request, *args, **kwargs)
+
+
+
+
+
+class SubmissionCreateView(LoginRequiredMixin, CreateView):
+    model = Submission
+    form_class = SubmissionForm
+    template_name = 'courses/submission_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.assignment = get_object_or_404(Assignment, pk=self.kwargs['assignment_pk'])
+
+        if Submission.objects.filter(assignment=self.assignment, student=request.user).exists():
+            messages.warning(request, 'Ви вже здали це завдання.')
+            return redirect(self.assignment.get_absolute_url())
+        
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.assignment = self.assignment
+        form.instance.student = self.request.user
+        messages.success(self.request, 'Відповідь відправлено!')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.assignment.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['assignment'] = self.assignment
+        context['lesson'] = self.assignment.lesson
+        context['module'] = self.assignment.lesson.module
+        context['course'] = self.assignment.lesson.module.course
+        return context
+
+
+class SubmissionDetailView(LoginRequiredMixin, DetailView):
+    model = Submission
+    template_name = 'courses/submission_detail.html'
+    context_object_name = 'submission'
+    pk_url_kwarg = 'submission_pk'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.is_student():
+            qs = qs.filter(student=self.request.user)
+            
+        return qs
