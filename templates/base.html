@@ -11,6 +11,9 @@
         <a href="{% url 'home' %}">Головна</a>
         <a href="{% url 'course_list' %}">Курси</a>
         {% if user.is_authenticated %}
+            {% if user.is_teacher or user.is_admin_role %}
+                <a href="{% url 'teacher_dashboard' %}">Дашборд</a>
+            {% endif %}
             <a href="{% url 'profile' %}">Профіль</a>
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}

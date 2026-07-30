@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Здані роботи — {{ course.title }}{% endblock %}
+
+{% block content %}
+<h1>Здані роботи: {{ course.title }}</h1>
+
+<p>
+    <a href="{% url 'teacher_dashboard' %}">← Назад до дашборду</a> |
+    <a href="{{ course.get_absolute_url }}">Перейти до курсу</a>
+</p>
+
+<h2>Статистика</h2>
+<ul>
+    <li><strong>Всього відповідей:</strong> {{ total_submissions }}</li>
+    <li><strong>Оцінених:</strong> {{ graded_count }}</li>
+    <li><strong>На перевірці:</strong> {{ pending_count }}</li>
+</ul>
+
+<h2>Список відповідей</h2>
+{% if submissions %}
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Студент</th>
+                <th>Завдання</th>
+                <th>Урок</th>
+                <th>Дата здачі</th>
+                <th>Статус</th>
+                <th>Бал</th>
+                <th>Дія</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+                <tr>
+                    <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+                    <td>{{ sub.assignment.title }}</td>
+                    <td>{{ sub.assignment.lesson.title }}</td>
+                    <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        {% if sub.grade %}
+                            Оцінено
+                        {% else %}
+                            На перевірці
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sub.grade %}
+                            {{ sub.grade.score }} / {{ sub.assignment.max_score }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'submission_detail' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Переглянути</a>
+                        {% if sub.grade %}
+                            | <a href="{% url 'grade_update' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Змінити оцінку</a>
+                        {% else %}
+                            | <a href="{% url 'grade_create' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Оцінити</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>По цьому курсу ще не було здано жодної роботи.</p>
+{% endif %}
+{% endblock %}

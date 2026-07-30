@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</h1>
+
+<h2>Інформація про відповідь</h2>
+<p><strong>Студент:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
+<p><strong>Завдання:</strong> {{ assignment.title }}</p>
+<p><strong>Максимальний бал:</strong> {{ assignment.max_score }}</p>
+<p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>
+
+{% if submission.text %}
+    <h3>Текстова відповідь</h3>
+    <div>{{ submission.text|linebreaks }}</div>
+{% endif %}
+
+{% if submission.file %}
+    <h3>Файл</h3>
+    <p><a href="{{ submission.file.url }}">Завантажити файл</a></p>
+{% endif %}
+
+<hr>
+
+<h2>Оцінка</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</button>
+</form>
+
+<p><a href="{{ assignment.get_absolute_url }}">← Назад до завдання</a></p>
+{% endblock %}

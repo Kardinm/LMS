@@ -135,3 +135,28 @@ class Submission(models.Model):
 
     def __str__(self):
         return f'Відповідь {self.student.username} на {self.assignment.title}'
+
+
+class Grade(models.Model):
+    submission = models.OneToOneField(
+        Submission,
+        on_delete=models.CASCADE,
+        related_name='grade',
+        verbose_name='Відповідь'
+    )
+    score = models.PositiveIntegerField(verbose_name='Бал')
+    comment = models.TextField(blank=True, verbose_name='Коментар викладача')
+    graded_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата оцінювання')
+    graded_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='grades_given',
+        verbose_name='Оцінив'
+    )
+
+    class Meta:
+        verbose_name = 'Оцінка'
+        verbose_name_plural = 'Оцінки'
+
+    def __str__(self):
+        return f"{self.score}/{self.submission.assignment.max_score} — {self.submission.student.username}"

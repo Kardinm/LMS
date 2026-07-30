@@ -26,4 +26,11 @@ urlpatterns = [
     
     path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submit/', SubmissionCreateView.as_view(), name='submission_create'),
     path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submission/<int:submission_pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
+    
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submission/<int:submission_pk>/grade/', GradeCreateView.as_view(), name='grade_create'),
+    path('<int:course_pk>/module/<int:module_pk>/lesson/<int:lesson_pk>/assignment/<int:assignment_pk>/submission/<int:submission_pk>/grade/edit/', GradeUpdateView.as_view(), name='grade_update'),
+    
+    path('teacher/dashboard/', TeacherDashboardView.as_view(), name='teacher_dashboard'),
+    
+    path('<int:pk>/submissions/', CourseSubmissionsView.as_view(), name='course_submissions'),
 ]

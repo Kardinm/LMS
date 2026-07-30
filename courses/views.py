@@ -6,8 +6,8 @@ from django.views.generic import (
 )
 from django.contrib import messages
 
-from .models import Course, Module, Lesson, Assignment, Submission
-from .forms import CourseForm, ModuleForm, LessonForm, AssignmentForm, SubmissionForm
+from .models import Course, Module, Lesson, Assignment, Submission, Grade
+from .forms import CourseForm, ModuleForm, LessonForm, AssignmentForm, SubmissionForm, GradeForm
 
 
 class TeacherOrAdminRequiredMixin(UserPassesTestMixin):
@@ -209,6 +209,8 @@ class LessonDeleteView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, DeleteVi
         return super().delete(request, *args, **kwargs)
     
 
+
+
 class AssignmentDetailView(DetailView):
     model = Assignment
     template_name = 'courses/assignment_detail.html'
@@ -342,3 +344,133 @@ class SubmissionDetailView(LoginRequiredMixin, DetailView):
             qs = qs.filter(student=self.request.user)
             
         return qs
+
+
+class GradeCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+    model = Grade
+    form_class = GradeForm
+    template_name = 'courses/grade_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.submission = get_object_or_404(Submission, pk=self.kwargs['submission_pk'])
+        
+        if hasattr(self.submission, 'grade'):
+            messages.warning(request, 'Ця відповідь вже оцінена. Ви можете оновити оцінку.')
+            return redirect('grade_update', course_pk=self.kwargs['course_pk'],
+                          module_pk=self.kwargs['module_pk'], lesson_pk=self.kwargs['lesson_pk'],
+                          assignment_pk=self.kwargs['assignment_pk'],
+                          submission_pk=self.submission.pk
+            )
+        
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['max_score'] = self.submission.assignment.max_score
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.submission = self.submission
+        form.instance.graded_by = self.request.user
+        messages.success(self.request, 'Оцінку виставлено!')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.submission.assignment.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submission'] = self.submission
+        context['assignment'] = self.submission.assignment
+        context['lesson'] = self.submission.assignment.lesson
+        context['module'] = self.submission.assignment.lesson.module
+        context['course'] = self.submission.assignment.lesson.module.course
+        return context
+
+
+class GradeUpdateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, UpdateView):
+    model = Grade
+    form_class = GradeForm
+    template_name = 'courses/grade_form.html'
+    pk_url_kwarg = 'grade_pk'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['max_score'] = self.object.submission.assignment.max_score
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Оцінку оновлено!')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.object.submission.assignment.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submission'] = self.object.submission
+        context['assignment'] = self.object.submission.assignment
+        context['lesson'] = self.object.submission.assignment.lesson
+        context['module'] = self.object.submission.assignment.lesson.module
+        context['course'] = self.object.submission.assignment.lesson.module.course
+        context['is_update'] = True
+        return context
+
+
+
+class TeacherDashboardView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, TemplateView):
+    template_name = 'courses/teacher_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        if user.is_admin_role():
+            context['my_courses'] = Course.objects.all()
+            context['total_students'] = user.__class__.objects.filter(role='student').count()
+        else:
+            context['my_courses'] = Course.objects.filter(author=user)
+            
+            context['total_students'] = Submission.objects.filter(
+                assignment__lesson__module__course__in=context['my_courses']
+            ).values('student').distinct().count()
+
+        
+        context['pending_submissions'] = Submission.objects.filter(
+            assignment__lesson__module__course__in=context['my_courses'],
+            grade__isnull=True
+        ).select_related('student', 'assignment').order_by('submitted_at')
+
+       
+        context['total_submissions'] = Submission.objects.filter(
+            assignment__lesson__module__course__in=context['my_courses']
+        ).count()
+
+        
+        context['graded_submissions'] = Grade.objects.filter(
+            submission__assignment__lesson__module__course__in=context['my_courses']
+        ).count()
+
+        return context
+
+
+class CourseSubmissionsView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, DetailView):
+    model = Course
+    template_name = 'courses/course_submissions.html'
+    context_object_name = 'course'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = self.object
+
+        context['submissions'] = Submission.objects.filter(
+            assignment__lesson__module__course=course
+        ).select_related('student', 'assignment', 'assignment__lesson').prefetch_related('grade')
+
+        context['total_submissions'] = context['submissions'].count()
+        context['graded_count'] = Grade.objects.filter(
+            submission__assignment__lesson__module__course=course
+        ).count()
+        context['pending_count'] = context['total_submissions'] - context['graded_count']
+
+        return context

@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Course, Module, Lesson, Assignment, Submission
+from .models import *
+
+
+class GradeInline(admin.StackedInline):
+    model = Grade
+    extra = 0
+    readonly_fields = ['graded_at', 'graded_by']
 
 
 class SubmissionInline(admin.TabularInline):
@@ -64,3 +70,10 @@ class SubmissionAdmin(admin.ModelAdmin):
     list_display = ['student', 'assignment', 'submitted_at']
     list_filter = ['assignment__lesson__module__course', 'submitted_at']
     search_fields = ['student__username', 'text']
+
+
+@admin.register(Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display = ['submission', 'score', 'graded_by', 'graded_at']
+    list_filter = ['graded_at', 'graded_by']
+    search_fields = ['submission__student__username', 'comment']

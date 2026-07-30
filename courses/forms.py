@@ -1,5 +1,5 @@
 from django import forms
-from .models import Course, Module, Lesson, Assignment, Submission
+from .models import *
 
 
 class CourseForm(forms.ModelForm):
@@ -47,3 +47,18 @@ class SubmissionForm(forms.ModelForm):
         widgets = {
             'text': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Ваша відповідь...'}),
         }
+
+
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = Grade
+        fields = ['score', 'comment']
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Коментар викладача...'}),
+        }
+
+    def __init__(self, *args, max_score=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if max_score:
+            self.fields['score'].widget.attrs['max'] = max_score
+            self.fields['score'].widget.attrs['min'] = 0
