@@ -9,6 +9,30 @@
     <p><a href="{% url 'course_create' %}">Створити новий курс</a></p>
 {% endif %}
 
+<h2>Пошук та фільтри</h2>
+<form method="get">
+    <p>
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Пошук за назвою, описом або автором...">
+    </p>
+    <p>
+        <label for="author">Викладач:</label>
+        <select name="author" id="author">
+            <option value="">Всі викладачі</option>
+            {% for teacher in teachers %}
+                <option value="{{ teacher.pk }}" {% if request.GET.author == teacher.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ teacher.get_full_name|default:teacher.username }}
+                </option>
+            {% endfor %}
+        </select>
+    </p>
+    <p>
+        <button type="submit">Застосувати</button>
+        <a href="{% url 'course_list' %}">Скинути фільтри</a>
+    </p>
+</form>
+
+<hr>
+
 {% if courses %}
     <ul>
         {% for course in courses %}
@@ -23,17 +47,17 @@
         {% endfor %}
     </ul>
 {% else %}
-    <p>Курсів поки що немає.</p>
+    <p>Курсів не знайдено.</p>
 {% endif %}
 
 {% if is_paginated %}
     <div>
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}">← Попередня</a>
+            <a href="?{% if get_params %}{{ get_params }}&{% endif %}page={{ page_obj.previous_page_number }}">← Попередня</a>
         {% endif %}
         <span>Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">Наступна →</a>
+            <a href="?{% if get_params %}{{ get_params }}&{% endif %}page={{ page_obj.next_page_number }}">Наступна →</a>
         {% endif %}
     </div>
 {% endif %}

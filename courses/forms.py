@@ -1,4 +1,5 @@
 from django import forms
+from users.models import User
 from .models import *
 
 
@@ -62,3 +63,17 @@ class GradeForm(forms.ModelForm):
         if max_score:
             self.fields['score'].widget.attrs['max'] = max_score
             self.fields['score'].widget.attrs['min'] = 0
+
+
+class CourseSearchForm(forms.Form):
+    q = forms.CharField(
+        required=False,
+        label='Пошук',
+        widget=forms.TextInput(attrs={'placeholder': 'Назва курсу...'})
+    )
+    author = forms.ModelChoiceField(
+        queryset=User.objects.filter(role__in=['teacher', 'admin']).order_by('username'),
+        required=False,
+        label='Викладач',
+        empty_label='— Усі викладачі —'
+    )

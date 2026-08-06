@@ -58,3 +58,28 @@
             {% endif %}
         </div>
     {% endfor %}
+{% else %}
+    <p>Модулів поки що немає.</p>
+{% endif %}
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <p><a href="{% url 'module_create' course.pk %}">+ Додати модуль</a></p>
+    <p>
+        <a href="{% url 'course_update' course.pk %}">Редагувати курс</a> |
+        <a href="{% url 'course_delete' course.pk %}">Видалити курс</a>
+    </p>
+
+    <h2>Підписані студенти</h2>
+    {% if subscribed_students %}
+        <ul>
+            {% for sub in subscribed_students %}
+                <li>{{ sub.student.get_full_name|default:sub.student.username }} (з {{ sub.subscribed_at|date:"d.m.Y" }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Ще ніхто не підписався.</p>
+    {% endif %}
+{% endif %}
+
+<p><a href="{% url 'course_list' %}">← Назад до списку курсів</a></p>
+{% endblock %}

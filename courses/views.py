@@ -4,12 +4,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 )
+from django.conf import settings
+from django.apps import apps
+from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 
 from .models import Course, Module, Lesson, Assignment, Submission, Grade
 from users.models import Subscription
-from .forms import CourseForm, ModuleForm, LessonForm, AssignmentForm, SubmissionForm, GradeForm
+from .forms import *
 
 
 class TeacherOrAdminRequiredMixin(UserPassesTestMixin):
@@ -51,6 +54,76 @@ class CourseListView(ListView):
     template_name = 'courses/course_list.html'
     context_object_name = 'courses'
     paginate_by = 9
+
+    def get_queryset(self):
+        qs = Course.objects.all().select_related('author')
+
+        search = self.request.GET.get('q')
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(author__username__icontains=search) |
+                Q(author__first_name__icontains=search) |
+                Q(author__last_name__icontains=search)
+            )
+
+        author_id = self.request.GET.get('author')
+        if author_id:
+            qs = qs.filter(author_id=author_id)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        User = settings.AUTH_USER_MODEL
+        UserModel = apps.get_model('users', 'User')
+        context['teachers'] = UserModel.objects.filter(
+            role__in=['teacher', 'admin']
+        ).order_by('username')
+    
+        context['get_params'] = self.request.GET.urlencode()
+        return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        form = CourseSearchForm(self.request.GET)
+        if form.is_valid():
+            q = form.cleaned_data.get('q')
+            author = form.cleaned_data.get('author')
+            if q:
+                qs = qs.filter(title__icontains=q)
+            if author:
+                qs = qs.filter(author=author)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = CourseSearchForm(self.request.GET or None)
+        return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        search = self.request.GET.get('q')
+        author = self.request.GET.get('author')
+
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
+        if author:
+            qs = qs.filter(author_id=author)
+            
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from users.models import User
+        context['teachers'] = User.objects.filter(
+            Q(role='teacher') | Q(role='admin')
+        ).distinct()
+        context['search_query'] = self.request.GET.get('q', '')
+        context['selected_author'] = self.request.GET.get('author', '')
+        return context
 
 
 class CourseDetailView(DetailView):

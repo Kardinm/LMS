@@ -44,3 +44,59 @@
         {% endfor %}
     </ul>
 {% else %}
+    <p>Завдань поки що немає.</p>
+{% endif %}
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <p><a href="{% url 'assignment_create' course.pk module.pk lesson.pk %}">+ Додати завдання</a></p>
+{% endif %}
+
+{% if user.is_authenticated and user.is_student %}
+    <h3>Мої відповіді на цьому уроці</h3>
+    {% if user_submissions %}
+        <ul>
+            {% for sub in user_submissions %}
+                <li>
+                    <a href="{% url 'submission_detail' course.pk module.pk lesson.pk sub.assignment.pk sub.pk %}">
+                        Відповідь на "{{ sub.assignment.title }}"
+                    </a>
+                    — здано {{ sub.submitted_at|date:"d.m.Y H:i" }}
+                    {% if sub.grade %}
+                        <span><strong>Оцінка: {{ sub.grade.score }} / {{ sub.assignment.max_score }}</strong></span>
+                    {% else %}
+                        <span><em>На перевірці</em></span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Ви ще не здали жодного завдання на цьому уроці.</p>
+    {% endif %}
+{% endif %}
+
+<hr>
+
+<div>
+    {% if prev_lesson %}
+        <a href="{{ prev_lesson.get_absolute_url }}">← Попередній урок: {{ prev_lesson.title }}</a>
+    {% else %}
+        <span>← Попередній урок немає</span>
+    {% endif %}
+
+    <span> | </span>
+
+    {% if next_lesson %}
+        <a href="{{ next_lesson.get_absolute_url }}">Наступний урок: {{ next_lesson.title }} →</a>
+    {% else %}
+        <span>Наступний урок немає →</span>
+    {% endif %}
+</div>
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <hr>
+    <p>
+        <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати урок</a> |
+        <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити урок</a>
+    </p>
+{% endif %}
+{% endblock %}
