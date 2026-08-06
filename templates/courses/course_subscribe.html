@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Підписка на курс{% endblock %}
+
+{% block content %}
+<h1>Підписка на курс</h1>
+<p>Ви хочете підписатися на курс "<strong>{{ course.title }}</strong>"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Так, підписатися</button>
+    <a href="{{ course.get_absolute_url }}">Скасувати</a>
+</form>
+{% endblock %}

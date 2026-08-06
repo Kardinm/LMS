@@ -13,6 +13,7 @@ class SubmissionInline(admin.TabularInline):
     extra = 0
     readonly_fields = ['student', 'submitted_at']
     fields = ['student', 'text', 'file', 'submitted_at']
+    show_change_link = True
 
 
 class AssignmentInline(admin.TabularInline):
@@ -70,6 +71,7 @@ class SubmissionAdmin(admin.ModelAdmin):
     list_display = ['student', 'assignment', 'submitted_at']
     list_filter = ['assignment__lesson__module__course', 'submitted_at']
     search_fields = ['student__username', 'text']
+    inlines = [GradeInline]
 
 
 @admin.register(Grade)

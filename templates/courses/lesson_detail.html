@@ -8,6 +8,13 @@
 <h1>{{ lesson.title }}</h1>
 <p><strong>Модуль:</strong> {{ module.title }}</p>
 
+{% if user.is_authenticated and user.is_student %}
+    <p><em>Ви підписані на цей курс.</em></p>
+    {% if module_progress %}
+        <p><strong>Прогрес по модулю:</strong> {{ module_progress.done }} / {{ module_progress.total }} завдань ({{ module_progress.percent }}%)</p>
+    {% endif %}
+{% endif %}
+
 {% if lesson.video_url %}
     <p><strong>Відео:</strong></p>
     <p><a href="{{ lesson.video_url }}" target="_blank">{{ lesson.video_url }}</a></p>
@@ -20,27 +27,20 @@
 
 <hr>
 
-<div>
-    {% if prev_lesson %}
-        <a href="{{ prev_lesson.get_absolute_url }}">← Попередній урок: {{ prev_lesson.title }}</a>
-    {% else %}
-        <span>← Попереднього уроку немає</span>
-    {% endif %}
-
-    <span> | </span>
-
-    {% if next_lesson %}
-        <a href="{{ next_lesson.get_absolute_url }}">Наступний урок: {{ next_lesson.title }} →</a>
-    {% else %}
-        <span>Наступного уроку немає →</span>
-    {% endif %}
-</div>
-
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <hr>
-    <p>
-        <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати урок</a> |
-        <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити урок</a>
-    </p>
-{% endif %}
-{% endblock %}
+<h2>Завдання</h2>
+{% if lesson.assignments.all %}
+    <ul>
+        {% for assignment in lesson.assignments.all %}
+            <li>
+                <a href="{{ assignment.get_absolute_url }}">{{ assignment.title }}</a>
+                {% if assignment.deadline %}
+                    <span>(Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }})</span>
+                {% endif %}
+                {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                    <a href="{% url 'assignment_update' course.pk module.pk lesson.pk assignment.pk %}">Редагувати</a>
+                    <a href="{% url 'assignment_delete' course.pk module.pk lesson.pk assignment.pk %}">Видалити</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}

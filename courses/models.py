@@ -1,13 +1,13 @@
 from django.db import models
 from django.urls import reverse
-from users.models import User
+from django.conf import settings
 
 
 class Course(models.Model):
     title = models.CharField(max_length=255, verbose_name='Назва курсу')
     description = models.TextField(blank=True, verbose_name='Опис')
     author = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='courses',
         verbose_name='Автор'
@@ -25,6 +25,12 @@ class Course(models.Model):
 
     def get_absolute_url(self):
         return reverse('course_detail', kwargs={'pk': self.pk})
+
+    def is_subscribed(self, user):
+        if not user.is_authenticated:
+            return False
+        
+        return self.subscriptions.filter(student=user).exists()
 
 
 class Module(models.Model):
@@ -46,7 +52,7 @@ class Module(models.Model):
 
     def __str__(self):
         return f"{self.order}. {self.title}"
-    
+
 
 class Lesson(models.Model):
     module = models.ForeignKey(
@@ -89,7 +95,6 @@ class Assignment(models.Model):
     description = models.TextField(blank=True, verbose_name='Опис завдання')
     deadline = models.DateTimeField(blank=True, null=True, verbose_name='Дедлайн')
     max_score = models.PositiveIntegerField(default=100, verbose_name='Максимальний бал')
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
 
@@ -118,7 +123,7 @@ class Submission(models.Model):
         verbose_name='Завдання'
     )
     student = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='submissions',
         verbose_name='Студент'
@@ -134,7 +139,7 @@ class Submission(models.Model):
         unique_together = ['assignment', 'student']
 
     def __str__(self):
-        return f'Відповідь {self.student.username} на {self.assignment.title}'
+        return f"Відповідь {self.student.username} на '{self.assignment.title}'"
 
 
 class Grade(models.Model):
@@ -148,7 +153,7 @@ class Grade(models.Model):
     comment = models.TextField(blank=True, verbose_name='Коментар викладача')
     graded_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата оцінювання')
     graded_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='grades_given',
         verbose_name='Оцінив'

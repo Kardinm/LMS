@@ -14,6 +14,9 @@
             {% if user.is_teacher or user.is_admin_role %}
                 <a href="{% url 'teacher_dashboard' %}">Дашборд</a>
             {% endif %}
+            {% if user.is_student %}
+                <a href="{% url 'student_dashboard' %}">Мій прогрес</a>
+            {% endif %}
             <a href="{% url 'profile' %}">Профіль</a>
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}

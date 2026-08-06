@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Мій прогрес{% endblock %}
+
+{% block content %}
+<h1>Мій прогрес</h1>
+
+<h2>Мої курси</h2>
+{% if subscribed_courses %}
+    <ul>
+        {% for course in subscribed_courses %}
+            <li>
+                <a href="{{ course.get_absolute_url }}">{{ course.title }}</a>
+                — автор: {{ course.author.get_full_name|default:course.author.username }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Ви ще не підписалися на жоден курс. <a href="{% url 'course_list' %}">Переглянути курси</a></p>
+{% endif %}
+
+<h2>Статистика</h2>
+<ul>
+    <li><strong>Оцінених завдань:</strong> {{ graded_count }}</li>
+    {% if average_score is not None %}
+        <li><strong>Середній бал:</strong> {{ average_score }}%</li>
+    {% else %}
+        <li><strong>Середній бал:</strong> ще немає оцінок</li>
+    {% endif %}
+</ul>
+
+<h2>Прогрес по курсах</h2>
+{% if course_progress %}
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Курс</th>
+                <th>Завдань</th>
+                <th>Виконано</th>
+                <th>Прогрес</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cp in course_progress %}
+                <tr>
+                    <td><a href="{{ cp.course.get_absolute_url }}">{{ cp.course.title }}</a></td>
+                    <td>{{ cp.total }}</td>
+                    <td>{{ cp.done }}</td>
+                    <td>{{ cp.percent }}%</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Поки що немає даних для відображення прогресу.</p>
+{% endif %}
+
+<h2>Мої відповіді</h2>
+{% if my_submissions %}
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Завдання</th>
+                <th>Урок</th>
+                <th>Курс</th>
+                <th>Дата здачі</th>
+                <th>Оцінка</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in my_submissions %}
+                <tr>
+                    <td><a href="{{ sub.assignment.get_absolute_url }}">{{ sub.assignment.title }}</a></td>
+                    <td>{{ sub.assignment.lesson.title }}</td>
+                    <td>{{ sub.assignment.lesson.module.course.title }}</td>
+                    <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        {% if sub.grade %}
+                            {{ sub.grade.score }} / {{ sub.assignment.max_score }}
+                        {% else %}
+                            <em>На перевірці</em>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Ви ще не здали жодного завдання.</p>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,20 @@
 <p>{{ course.description|linebreaks }}</p>
 <p><strong>Дата створення:</strong> {{ course.created_at|date:"d.m.Y H:i" }}</p>
 
+{% if user.is_authenticated %}
+    {% if user.is_student %}
+        {% if is_subscribed %}
+            <p><strong>Ви підписані на цей курс.</strong> <a href="{% url 'course_unsubscribe' course.pk %}">Відписатися</a></p>
+        {% else %}
+            <p><a href="{% url 'course_subscribe' course.pk %}">Підписатися на курс</a></p>
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    <p><a href="{% url 'course_submissions' course.pk %}">Здані роботи по курсу</a></p>
+{% endif %}
+
 <h2>Модулі</h2>
 {% if course.modules.all %}
     {% for module in course.modules.all %}
@@ -44,17 +58,3 @@
             {% endif %}
         </div>
     {% endfor %}
-{% else %}
-    <p>Модулів поки що немає.</p>
-{% endif %}
-
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <p><a href="{% url 'module_create' course.pk %}">+ Додати модуль</a></p>
-    <p>
-        <a href="{% url 'course_update' course.pk %}">Редагувати курс</a> |
-        <a href="{% url 'course_delete' course.pk %}">Видалити курс</a>
-    </p>
-{% endif %}
-
-<p><a href="{% url 'course_list' %}">← Назад до списку курсів</a></p>
-{% endblock %}

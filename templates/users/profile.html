@@ -10,7 +10,9 @@
 <p><strong>Роль:</strong> {{ user.get_role_display }}</p>
 
 {% if user.avatar %}
-    <p><img src="{{ user.avatar.url }}" alt="?" width="150"></p>
+    <p><img src="{{ user.avatar.url }}" alt="Аватар" style="max-width: 200px; max-height: 200px;"></p>
+{% else %}
+    <p><em>Аватар не встановлено.</em></p>
 {% endif %}
 
 <h2>Редагувати профіль</h2>
