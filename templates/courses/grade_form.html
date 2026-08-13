@@ -3,32 +3,34 @@
 {% block title %}{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</h1>
+<div class="card">
+    <h1>{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</h1>
 
-<h2>Інформація про відповідь</h2>
-<p><strong>Студент:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
-<p><strong>Завдання:</strong> {{ assignment.title }}</p>
-<p><strong>Максимальний бал:</strong> {{ assignment.max_score }}</p>
-<p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>
+    <div class="card" style="background:var(--bg-input); margin-bottom:20px;">
+        <p><strong>Студент:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
+        <p><strong>Завдання:</strong> {{ assignment.title }}</p>
+        <p><strong>Максимальний бал:</strong> <span class="badge badge-accent">{{ assignment.max_score }}</span></p>
+        <p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>
 
-{% if submission.text %}
-    <h3>Текстова відповідь</h3>
-    <div>{{ submission.text|linebreaks }}</div>
-{% endif %}
+        {% if submission.text %}
+            <h3>Текстова відповідь</h3>
+            <div style="line-height:1.8;">{{ submission.text|linebreaks }}</div>
+        {% endif %}
+        {% if submission.file %}
+            <p><a href="{{ submission.file.url }}" class="btn btn-sm btn-secondary">&#11015; Завантажити файл</a></p>
+        {% endif %}
+    </div>
 
-{% if submission.file %}
-    <h3>Файл</h3>
-    <p><a href="{{ submission.file.url }}">Завантажити файл</a></p>
-{% endif %}
+    <div class="form-box">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+                {% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}
+            </button>
+        </form>
+    </div>
 
-<hr>
-
-<h2>Оцінка</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</button>
-</form>
-
-<p><a href="{{ assignment.get_absolute_url }}">← Назад до завдання</a></p>
+    <p style="margin-top:16px;"><a href="{{ assignment.get_absolute_url }}">&larr; Назад до завдання</a></p>
+</div>
 {% endblock %}

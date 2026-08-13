@@ -3,83 +3,88 @@
 {% block title %}{{ course.title }}{% endblock %}
 
 {% block content %}
-<h1>{{ course.title }}</h1>
-<p><strong>Автор:</strong> {{ course.author.get_full_name|default:course.author.username }}</p>
-<p><strong>Опис:</strong></p>
-<p>{{ course.description|linebreaks }}</p>
-<p><strong>Дата створення:</strong> {{ course.created_at|date:"d.m.Y H:i" }}</p>
+<div class="card">
+    <h1>{{ course.title }}</h1>
+    <p><strong>Автор:</strong> {{ course.author.get_full_name|default:course.author.username }}</p>
+    <p>{{ course.description|linebreaks }}</p>
+    <p style="color:var(--text-muted); font-size:0.9rem;">Створено: {{ course.created_at|date:"d.m.Y" }}</p>
 
-{% if user.is_authenticated %}
-    {% if user.is_student %}
-        {% if is_subscribed %}
-            <p><strong>Ви підписані на цей курс.</strong> <a href="{% url 'course_unsubscribe' course.pk %}">Відписатися</a></p>
-        {% else %}
-            <p><a href="{% url 'course_subscribe' course.pk %}">Підписатися на курс</a></p>
+    {% if user.is_authenticated %}
+        {% if user.is_student %}
+            {% if is_subscribed %}
+                <p><span class="badge badge-accent">&#10003; Ви підписані</span> <a href="{% url 'course_unsubscribe' course.pk %}" class="btn btn-sm btn-danger">Відписатися</a></p>
+            {% else %}
+                <p><a href="{% url 'course_subscribe' course.pk %}" class="btn btn-primary">Підписатися на курс</a></p>
+            {% endif %}
         {% endif %}
     {% endif %}
-{% endif %}
 
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <p><a href="{% url 'course_submissions' course.pk %}">Здані роботи по курсу</a></p>
-{% endif %}
+    {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+            <a href="{% url 'course_submissions' course.pk %}" class="btn btn-secondary">Здані роботи</a>
+            <a href="{% url 'course_update' course.pk %}" class="btn btn-secondary">Редагувати</a>
+            <a href="{% url 'course_delete' course.pk %}" class="btn btn-danger">Видалити</a>
+        </div>
+    {% endif %}
+</div>
 
 <h2>Модулі</h2>
 {% if course.modules.all %}
     {% for module in course.modules.all %}
-        <div style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+        <div class="module-block">
             <h3>{{ module.order }}. {{ module.title }}</h3>
             {% if module.description %}
                 <p>{{ module.description }}</p>
             {% endif %}
 
-            <h4>Уроки:</h4>
+            <h4>Уроки</h4>
             {% if module.lessons.all %}
-                <ol>
+                <ul class="lesson-list">
                     {% for lesson in module.lessons.all %}
                         <li>
                             <a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a>
                             {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-                                <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати</a>
-                                <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити</a>
+                                <span>
+                                    <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>
+                                    <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}" class="btn btn-sm btn-danger">Видалити</a>
+                                </span>
                             {% endif %}
                         </li>
                     {% endfor %}
-                </ol>
+                </ul>
             {% else %}
-                <p>Уроків поки що немає.</p>
+                <p style="color:var(--text-muted);">Уроків поки що немає</p>
             {% endif %}
 
             {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-                <p><a href="{% url 'lesson_create' course.pk module.pk %}">+ Додати урок</a></p>
-                <p>
-                    <a href="{% url 'module_update' course.pk module.pk %}">Редагувати модуль</a>
-                    <a href="{% url 'module_delete' course.pk module.pk %}">Видалити модуль</a>
-                </p>
+                <div style="margin-top:12px; display:flex; gap:8px;">
+                    <a href="{% url 'lesson_create' course.pk module.pk %}" class="btn btn-sm btn-primary">+ Додати урок</a>
+                    <a href="{% url 'module_update' course.pk module.pk %}" class="btn btn-sm btn-secondary">Редагувати модуль</a>
+                    <a href="{% url 'module_delete' course.pk module.pk %}" class="btn btn-sm btn-danger">Видалити модуль</a>
+                </div>
             {% endif %}
         </div>
     {% endfor %}
 {% else %}
-    <p>Модулів поки що немає.</p>
+    <div class="empty">Модулів поки що немає</div>
 {% endif %}
 
 {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <p><a href="{% url 'module_create' course.pk %}">+ Додати модуль</a></p>
-    <p>
-        <a href="{% url 'course_update' course.pk %}">Редагувати курс</a> |
-        <a href="{% url 'course_delete' course.pk %}">Видалити курс</a>
-    </p>
+    <p><a href="{% url 'module_create' course.pk %}" class="btn btn-primary">+ Додати модуль</a></p>
 
     <h2>Підписані студенти</h2>
     {% if subscribed_students %}
-        <ul>
-            {% for sub in subscribed_students %}
-                <li>{{ sub.student.get_full_name|default:sub.student.username }} (з {{ sub.subscribed_at|date:"d.m.Y" }})</li>
-            {% endfor %}
-        </ul>
+        <div class="card">
+            <ul>
+                {% for sub in subscribed_students %}
+                    <li>{{ sub.student.get_full_name|default:sub.student.username }} <span class="badge badge-muted">з {{ sub.subscribed_at|date:"d.m.Y" }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
     {% else %}
-        <p>Ще ніхто не підписався.</p>
+        <div class="empty">Ще ніхто не підписався</div>
     {% endif %}
 {% endif %}
 
-<p><a href="{% url 'course_list' %}">← Назад до списку курсів</a></p>
+<p style="margin-top:20px;"><a href="{% url 'course_list' %}">&larr; Назад до списку курсів</a></p>
 {% endblock %}

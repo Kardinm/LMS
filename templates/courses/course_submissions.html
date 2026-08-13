@@ -6,65 +6,60 @@
 <h1>Здані роботи: {{ course.title }}</h1>
 
 <p>
-    <a href="{% url 'teacher_dashboard' %}">← Назад до дашборду</a> |
+    <a href="{% url 'teacher_dashboard' %}">&larr; Назад до дашборду</a>
+    <span style="margin:0 8px;">|</span>
     <a href="{{ course.get_absolute_url }}">Перейти до курсу</a>
 </p>
 
-<h2>Статистика</h2>
-<ul>
-    <li><strong>Всього відповідей:</strong> {{ total_submissions }}</li>
-    <li><strong>Оцінених:</strong> {{ graded_count }}</li>
-    <li><strong>На перевірці:</strong> {{ pending_count }}</li>
-</ul>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ total_submissions }}</div>
+        <div class="stat-label">Всього відповідей</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ graded_count }}</div>
+        <div class="stat-label">Оцінених</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">На перевірці</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ subscribed_students.count }}</div>
+        <div class="stat-label">Підписаних студентів</div>
+    </div>
+</div>
 
 <h2>Список відповідей</h2>
 {% if submissions %}
-    <table border="1" cellpadding="8">
-        <thead>
-            <tr>
-                <th>Студент</th>
-                <th>Завдання</th>
-                <th>Урок</th>
-                <th>Дата здачі</th>
-                <th>Статус</th>
-                <th>Бал</th>
-                <th>Дія</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sub in submissions %}
-                <tr>
-                    <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
-                    <td>{{ sub.assignment.title }}</td>
-                    <td>{{ sub.assignment.lesson.title }}</td>
-                    <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
-                    <td>
-                        {% if sub.grade %}
-                            Оцінено
-                        {% else %}
-                            На перевірці
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if sub.grade %}
-                            {{ sub.grade.score }} / {{ sub.assignment.max_score }}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'submission_detail' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Переглянути</a>
-                        {% if sub.grade %}
-                            | <a href="{% url 'grade_update' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Змінити оцінку</a>
-                        {% else %}
-                            | <a href="{% url 'grade_create' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Оцінити</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Студент</th><th>Завдання</th><th>Урок</th><th>Дата здачі</th><th>Статус</th><th>Бал</th><th>Дія</th></tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                    <tr>
+                        <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+                        <td>{{ sub.assignment.title }}</td>
+                        <td>{{ sub.assignment.lesson.title }}</td>
+                        <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                        <td>{% if sub.grade %}<span class="badge badge-accent">Оцінено</span>{% else %}<span class="badge badge-muted">На перевірці</span>{% endif %}</td>
+                        <td>{% if sub.grade %}{{ sub.grade.score }} / {{ sub.assignment.max_score }}{% else %}—{% endif %}</td>
+                        <td>
+                            <a href="{% url 'submission_detail' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}" class="btn btn-sm btn-secondary">Переглянути</a>
+                            {% if sub.grade %}
+                                <a href="{% url 'grade_update' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}" class="btn btn-sm btn-primary">Змінити оцінку</a>
+                            {% else %}
+                                <a href="{% url 'grade_create' course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}" class="btn btn-sm btn-primary">Оцінити</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
-    <p>По цьому курсу ще не було здано жодної роботи.</p>
+    <div class="empty">По цьому курсу ще не було здано жодної роботи</div>
 {% endif %}
 {% endblock %}

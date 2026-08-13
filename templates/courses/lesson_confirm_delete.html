@@ -3,11 +3,15 @@
 {% block title %}Видалити урок{% endblock %}
 
 {% block content %}
-<h1>Видалити урок</h1>
-<p>Ви впевнені, що хочете видалити урок "<strong>{{ object.title }}</strong>" з модуля "{{ object.module.title }}"?</p>
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Так, видалити</button>
-    <a href="{{ object.get_absolute_url }}">Скасувати</a>
-</form>
+<div class="form-box">
+    <div class="card" style="text-align:center;">
+        <h1>Видалити урок</h1>
+        <p>Ви впевнені, що хочете видалити урок<br><strong>"{{ object.title }}"</strong>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Так, видалити</button>
+            <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Скасувати</a>
+        </form>
+    </div>
+</div>
 {% endblock %}

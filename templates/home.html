@@ -3,22 +3,28 @@
 {% block title %}Головна{% endblock %}
 
 {% block content %}
-<h1>Назва</h1>
-<p>Ласкаво просимо до Назва! Тут ви бла-бла-бла...........</p>
+<div class="hero">
+    <h1>Назва</h1>
+    <p>Якийсь текст, бла бла бла...</p>
+    <a href="{% url 'course_list' %}" class="btn btn-primary">Переглянути курси &rarr;</a>
+</div>
 
 <h2>Останні курси</h2>
 {% if latest_courses %}
-    <ul>
+    <div class="stats-grid">
         {% for course in latest_courses %}
-            <li>
-                <a href="{{ course.get_absolute_url }}">{{ course.title }}</a>
-                — {{ course.author.get_full_name|default:course.author.username }}
-            </li>
+            <div class="card card-hover">
+                <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+                <p>{{ course.author.get_full_name|default:course.author.username }}</p>
+                <span class="badge badge-muted">{{ course.modules.count }} модулів</span>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 {% else %}
-    <p>Курсів поки що немає.</p>
+    <div class="empty">Курсів поки що немає</div>
 {% endif %}
 
-<p><a href="{% url 'course_list' %}">Переглянути всі курси</a></p>
+<div style="margin-top: 24px;">
+    <p><span class="badge badge-accent">Всього курсів: {{ total_courses }}</span></p>
+</div>
 {% endblock %}

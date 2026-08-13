@@ -3,22 +3,21 @@
 {% block title %}Здати завдання{% endblock %}
 
 {% block content %}
-<h1>Здати завдання</h1>
-<p><strong>Завдання:</strong> {{ assignment.title }}</p>
-<p><strong>Урок:</strong> {{ lesson.title }}</p>
-<p><strong>Курс:</strong> {{ course.title }}</p>
-
-{% if assignment.deadline %}
-    <p><strong>Дедлайн:</strong> {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
-{% endif %}
-
-<hr>
-
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Відправити відповідь</button>
-</form>
-
-<p><a href="{{ assignment.get_absolute_url }}">← Назад до завдання</a></p>
+<div class="form-box">
+    <div class="card">
+        <h1>Здати завдання</h1>
+        <p><strong>{{ assignment.title }}</strong></p>
+        <p style="color:var(--text-muted);">{{ course.title }} &rarr; {{ lesson.title }}</p>
+        {% if assignment.deadline %}
+            <p>&#9201; Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
+        {% endif %}
+        <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary" style="width:100%;">Відправити відповідь</button>
+        </form>
+        <p style="margin-top:16px;"><a href="{{ assignment.get_absolute_url }}">&larr; Назад до завдання</a></p>
+    </div>
+</div>
 {% endblock %}

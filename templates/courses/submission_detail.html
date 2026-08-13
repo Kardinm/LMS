@@ -1,37 +1,44 @@
 {% extends 'base.html' %}
 
-{% block title %}Відповідь студента{% endblock %}
+{% block title %}Відповідь{% endblock %}
 
 {% block content %}
-<h1>Відповідь студента</h1>
-<p><strong>Студент:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
-<p><strong>Завдання:</strong> {{ submission.assignment.title }}</p>
-<p><strong>Урок:</strong> {{ submission.assignment.lesson.title }}</p>
-<p><strong>Курс:</strong> {{ submission.assignment.lesson.module.course.title }}</p>
-<p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>
+<div class="card">
+    <h1>Відповідь студента</h1>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+        <span class="badge badge-muted">{{ submission.student.get_full_name|default:submission.student.username }}</span>
+        <span class="badge badge-muted">{{ submission.assignment.title }}</span>
+        <span class="badge badge-muted">&#9201; {{ submission.submitted_at|date:"d.m.Y H:i" }}</span>
+    </div>
 
-{% if submission.text %}
-    <h2>Текстова відповідь</h2>
-    <div>{{ submission.text|linebreaks }}</div>
-{% endif %}
+    {% if submission.text %}
+        <h2>Текстова відповідь</h2>
+        <div class="card" style="background:var(--bg-input);">{{ submission.text|linebreaks }}</div>
+    {% endif %}
 
-{% if submission.file %}
-    <h2>Файл</h2>
-    <p><a href="{{ submission.file.url }}">Завантажити файл</a></p>
-{% endif %}
+    {% if submission.file %}
+        <h2>Файл</h2>
+        <p><a href="{{ submission.file.url }}" class="btn btn-secondary">&#11015; Завантажити файл</a></p>
+    {% endif %}
+</div>
 
 {% if submission.grade %}
-    <hr>
-    <h2>Оцінка</h2>
-    <p><strong>Бал:</strong> {{ submission.grade.score }} / {{ submission.assignment.max_score }}</p>
-    {% if submission.grade.comment %}
-        <p><strong>Коментар:</strong></p>
-        <div>{{ submission.grade.comment|linebreaks }}</div>
-    {% endif %}
-    <p><em>Оцінено: {{ submission.grade.graded_at|date:"d.m.Y H:i" }} — {{ submission.grade.graded_by.get_full_name|default:submission.grade.graded_by.username }}</em></p>
+    <div class="card" style="background:var(--accent-light); border-color:var(--accent);">
+        <h2>&#9733; Оцінка</h2>
+        <p style="font-size:1.3rem; font-weight:700; color:var(--accent-dark);">{{ submission.grade.score }} / {{ submission.assignment.max_score }}</p>
+        {% if submission.grade.comment %}
+            <p><strong>Коментар:</strong></p>
+            <div>{{ submission.grade.comment|linebreaks }}</div>
+        {% endif %}
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">
+            Оцінено: {{ submission.grade.graded_at|date:"d.m.Y H:i" }} — {{ submission.grade.graded_by.get_full_name|default:submission.grade.graded_by.username }}
+        </p>
+    </div>
 {% else %}
-    <p><em>Ще не оцінено.</em></p>
+    <div class="card" style="background:var(--warning-light); border-color:var(--warning);">
+        <p><em>Ще не оцінено</em></p>
+    </div>
 {% endif %}
 
-<p><a href="{{ submission.assignment.get_absolute_url }}">← Назад до завдання</a></p>
+<p style="margin-top:16px;"><a href="{{ submission.assignment.get_absolute_url }}">&larr; Назад до завдання</a></p>
 {% endblock %}

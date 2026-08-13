@@ -3,12 +3,16 @@
 {% block title %}{% if object %}Редагувати модуль{% else %}Додати модуль{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if object %}Редагувати модуль{% else %}Додати модуль{% endif %}</h1>
-<p>Курс: <strong>{{ course.title }}</strong></p>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% if object %}Зберегти зміни{% else %}Додати{% endif %}</button>
-</form>
-<p><a href="{{ course.get_absolute_url }}">← Назад до курсу</a></p>
+<div class="form-box">
+    <div class="card">
+        <h1>{% if object %}Редагувати модуль{% else %}Додати модуль{% endif %}</h1>
+        <p style="color:var(--text-muted);">Курс: <strong>{{ course.title }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">{% if object %}Зберегти{% else %}Додати{% endif %}</button>
+        </form>
+        <p style="margin-top:16px;"><a href="{{ course.get_absolute_url }}">&larr; Назад до курсу</a></p>
+    </div>
+</div>
 {% endblock %}

@@ -3,12 +3,16 @@
 {% block title %}{% if object %}Редагувати завдання{% else %}Створити завдання{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if object %}Редагувати завдання{% else %}Створити завдання{% endif %}</h1>
-<p>Курс: <strong>{{ course.title }}</strong> → Модуль: <strong>{{ module.title }}</strong> → Урок: <strong>{{ lesson.title }}</strong></p>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% if object %}Зберегти зміни{% else %}Створити{% endif %}</button>
-</form>
-<p><a href="{{ lesson.get_absolute_url }}">← Назад до уроку</a></p>
+<div class="form-box">
+    <div class="card">
+        <h1>{% if object %}Редагувати завдання{% else %}Створити завдання{% endif %}</h1>
+        <p style="color:var(--text-muted);">{{ course.title }} &rarr; {{ module.title }} &rarr; {{ lesson.title }}</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">{% if object %}Зберегти{% else %}Створити{% endif %}</button>
+        </form>
+        <p style="margin-top:16px;"><a href="{{ lesson.get_absolute_url }}">&larr; Назад до уроку</a></p>
+    </div>
+</div>
 {% endblock %}

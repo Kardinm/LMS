@@ -5,20 +5,32 @@
 {% block content %}
 <h1>Профіль користувача</h1>
 
-<p><strong>Ім'я користувача:</strong> {{ user.username }}</p>
-<p><strong>Email:</strong> Не скажу</p>
-<p><strong>Роль:</strong> {{ user.get_role_display }}</p>
-
-{% if user.avatar %}
-    <p><img src="{{ user.avatar.url }}" alt="Аватар" style="max-width: 200px; max-height: 200px;"></p>
-{% else %}
-    <p><em>Аватар не встановлено.</em></p>
-{% endif %}
+<div class="card" style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+    <div style="flex-shrink:0;">
+        {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="Аватар" class="avatar avatar-lg">
+        {% else %}
+            <div class="avatar avatar-lg" style="background:var(--accent-light); display:flex; align-items:center; justify-content:center; color:var(--accent-dark); font-size:3rem; font-weight:700;">
+                {{ user.username|first|upper }}
+            </div>
+        {% endif %}
+    </div>
+    <div style="flex:1; min-width:200px;">
+        <p><strong>Ім'я користувача:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Роль:</strong> <span class="badge badge-accent">{{ user.get_role_display }}</span></p>
+        {% if user.bio %}
+            <p><strong>Про себе:</strong> {{ user.bio }}</p>
+        {% endif %}
+    </div>
+</div>
 
 <h2>Редагувати профіль</h2>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Зберегти зміни</button>
-</form>
+<div class="card" style="max-width:600px;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+    </form>
+</div>
 {% endblock %}

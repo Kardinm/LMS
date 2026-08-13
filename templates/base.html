@@ -5,43 +5,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Назва{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <nav>
-        <a href="{% url 'home' %}">Головна</a>
-        <a href="{% url 'course_list' %}">Курси</a>
-        {% if user.is_authenticated %}
-            {% if user.is_teacher or user.is_admin_role %}
-                <a href="{% url 'teacher_dashboard' %}">Дашборд</a>
-            {% endif %}
-            {% if user.is_student %}
-                <a href="{% url 'student_dashboard' %}">Мій прогрес</a>
-            {% endif %}
-            <a href="{% url 'profile' %}">Профіль</a>
-            <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Вийти</button>
-            </form>
-        {% else %}
-            <a href="{% url 'login' %}">Вхід</a>
-            <a href="{% url 'register' %}">Реєстрація</a>
-        {% endif %}
+        <div class="nav-inner">
+            <a href="{% url 'home' %}" class="nav-brand">Назва<span>.</span></a>
+            <div class="nav-links">
+                <a href="{% url 'home' %}">Головна</a>
+                <a href="{% url 'course_list' %}">Курси</a>
+                {% if user.is_authenticated %}
+                    {% if user.is_teacher or user.is_admin_role %}
+                        <a href="{% url 'teacher_dashboard' %}">Дашборд</a>
+                    {% endif %}
+                    {% if user.is_student %}
+                        <a href="{% url 'student_dashboard' %}">Мій прогрес</a>
+                    {% endif %}
+                    <a href="{% url 'profile' %}">Профіль</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">Вийти</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Вхід</a>
+                    <a href="{% url 'register' %}">Реєстрація</a>
+                {% endif %}
+            </div>
+        </div>
     </nav>
 
     {% if messages %}
-        <ul>
+        <ul class="messages">
             {% for message in messages %}
-                <li>{{ message }}</li>
+                <li class="message {{ message.tags }}">{{ message }}</li>
             {% endfor %}
         </ul>
     {% endif %}
 
     <main>
-        {% block content %}{% endblock %}
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <footer>
-        <p> Назва</p>
+        <p>LMS Django Project</p>
     </footer>
 </body>
 </html>

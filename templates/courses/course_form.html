@@ -3,11 +3,15 @@
 {% block title %}{% if object %}Редагувати курс{% else %}Створити курс{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if object %}Редагувати курс{% else %}Створити новий курс{% endif %}</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% if object %}Зберегти зміни{% else %}Створити{% endif %}</button>
-</form>
-<p><a href="{% url 'course_list' %}">← Назад до списку курсів</a></p>
+<div class="form-box">
+    <div class="card">
+        <h1>{% if object %}Редагувати курс{% else %}Створити курс{% endif %}</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">{% if object %}Зберегти зміни{% else %}Створити{% endif %}</button>
+        </form>
+        <p style="margin-top:16px;"><a href="{% url 'course_list' %}">&larr; Назад до списку</a></p>
+    </div>
+</div>
 {% endblock %}

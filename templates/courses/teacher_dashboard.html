@@ -5,60 +5,69 @@
 {% block content %}
 <h1>Дашборд викладача</h1>
 
-<h2>Статистика</h2>
-<ul>
-    <li><strong>Мої курси:</strong> {{ my_courses.count }}</li>
-    <li><strong>Всього студентів (здали роботи):</strong> {{ total_students }}</li>
-    <li><strong>Всього відповідей:</strong> {{ total_submissions }}</li>
-    <li><strong>Оцінених:</strong> {{ graded_submissions }}</li>
-    <li><strong>На перевірці:</strong> {{ pending_submissions.count }}</li>
-</ul>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ my_courses.count }}</div>
+        <div class="stat-label">Мої курси</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ total_students }}</div>
+        <div class="stat-label">Студентів</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ total_submissions }}</div>
+        <div class="stat-label">Всього відповідей</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ graded_submissions }}</div>
+        <div class="stat-label">Оцінених</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pending_submissions.count }}</div>
+        <div class="stat-label">На перевірці</div>
+    </div>
+</div>
 
 <h2>Мої курси</h2>
 {% if my_courses %}
-    <ul>
+    <div class="stats-grid">
         {% for course in my_courses %}
-            <li>
-                <a href="{{ course.get_absolute_url }}">{{ course.title }}</a>
-                | <a href="{% url 'course_submissions' course.pk %}">Здані роботи</a>
-            </li>
+            <div class="card card-hover">
+                <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+                <p>{{ course.subscriptions.count }} студентів</p>
+                <a href="{% url 'course_submissions' course.pk %}" class="btn btn-sm btn-secondary">Здані роботи</a>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 {% else %}
-    <p>У вас поки що немає курсів.</p>
+    <div class="empty">У вас поки що немає курсів</div>
 {% endif %}
 
 <h2>Завдання на перевірці</h2>
 {% if pending_submissions %}
-    <table border="1" cellpadding="8">
-        <thead>
-            <tr>
-                <th>Студент</th>
-                <th>Завдання</th>
-                <th>Урок</th>
-                <th>Курс</th>
-                <th>Дата здачі</th>
-                <th>Дія</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sub in pending_submissions %}
-                <tr>
-                    <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
-                    <td>{{ sub.assignment.title }}</td>
-                    <td>{{ sub.assignment.lesson.title }}</td>
-                    <td>{{ sub.assignment.lesson.module.course.title }}</td>
-                    <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
-                    <td>
-                        <a href="{% url 'submission_detail' sub.assignment.lesson.module.course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Переглянути</a>
-                        |
-                        <a href="{% url 'grade_create' sub.assignment.lesson.module.course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}">Оцінити</a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Студент</th><th>Завдання</th><th>Урок</th><th>Курс</th><th>Дата здачі</th><th>Дія</th></tr>
+            </thead>
+            <tbody>
+                {% for sub in pending_submissions %}
+                    <tr>
+                        <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+                        <td>{{ sub.assignment.title }}</td>
+                        <td>{{ sub.assignment.lesson.title }}</td>
+                        <td>{{ sub.assignment.lesson.module.course.title }}</td>
+                        <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'submission_detail' sub.assignment.lesson.module.course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}" class="btn btn-sm btn-secondary">Переглянути</a>
+                            <a href="{% url 'grade_create' sub.assignment.lesson.module.course.pk sub.assignment.lesson.module.pk sub.assignment.lesson.pk sub.assignment.pk sub.pk %}" class="btn btn-sm btn-primary">Оцінити</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
-    <p>Всі роботи перевірено.</p>
+    <div class="empty">Всі роботи перевірено!</div>
 {% endif %}
 {% endblock %}

@@ -3,11 +3,19 @@
 {% block title %}Реєстрація{% endblock %}
 
 {% block content %}
-<h1>Реєстрація</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Зареєструватися</button>
-</form>
-<p>Вже маєте акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+<div class="form-box">
+    <div class="card">
+        <h1 style="text-align:center;">Реєстрація</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary" style="width:100%;">Зареєструватися</button>
+        </form>
+
+        <p style="text-align:center; margin-top: 16px;">
+            Вже маєте акаунт? <a href="{% url 'login' %}">Увійти</a>
+        </p>
+    </div>
+</div>
 {% endblock %}

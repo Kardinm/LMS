@@ -3,100 +3,108 @@
 {% block title %}{{ lesson.title }}{% endblock %}
 
 {% block content %}
-<p><a href="{{ course.get_absolute_url }}">← Назад до курсу {{ course.title }}</a></p>
+<p><a href="{{ course.get_absolute_url }}">&larr; Назад до курсу {{ course.title }}</a></p>
 
-<h1>{{ lesson.title }}</h1>
-<p><strong>Модуль:</strong> {{ module.title }}</p>
+<div class="card">
+    <h1>{{ lesson.title }}</h1>
+    <p><strong>Модуль:</strong> {{ module.title }}</p>
 
-{% if user.is_authenticated and user.is_student %}
-    <p><em>Ви підписані на цей курс.</em></p>
-    {% if module_progress %}
-        <p><strong>Прогрес по модулю:</strong> {{ module_progress.done }} / {{ module_progress.total }} завдань ({{ module_progress.percent }}%)</p>
+    {% if user.is_authenticated and user.is_student %}
+        <p><span class="badge badge-accent">&#10003; Підписка активна</span></p>
+        {% if module_progress %}
+            <p><strong>Прогрес по модулю:</strong> {{ module_progress.done }} / {{ module_progress.total }} завдань ({{ module_progress.percent }}%)</p>
+            <div style="background:var(--border); border-radius:999px; height:8px; overflow:hidden; max-width:300px;">
+                <div style="width:{{ module_progress.percent }}%; background:var(--accent); height:100%; transition:width 0.5s;"></div>
+            </div>
+        {% endif %}
     {% endif %}
-{% endif %}
 
-{% if lesson.video_url %}
-    <p><strong>Відео:</strong></p>
-    <p><a href="{{ lesson.video_url }}" target="_blank">{{ lesson.video_url }}</a></p>
-{% endif %}
+    {% if lesson.video_url %}
+        <div class="card" style="background:var(--bg-input); margin:16px 0;">
+            <p><strong>&#9654; Відео:</strong> <a href="{{ lesson.video_url }}" target="_blank">{{ lesson.video_url }}</a></p>
+        </div>
+    {% endif %}
 
-{% if lesson.content %}
-    <h2>Контент</h2>
-    <div>{{ lesson.content|linebreaks }}</div>
-{% endif %}
-
-<hr>
+    {% if lesson.content %}
+        <h2>Контент</h2>
+        <div style="line-height:1.8;">{{ lesson.content|linebreaks }}</div>
+    {% endif %}
+</div>
 
 <h2>Завдання</h2>
 {% if lesson.assignments.all %}
-    <ul>
+    <div class="stats-grid">
         {% for assignment in lesson.assignments.all %}
-            <li>
-                <a href="{{ assignment.get_absolute_url }}">{{ assignment.title }}</a>
+            <div class="card card-hover">
+                <h3><a href="{{ assignment.get_absolute_url }}">{{ assignment.title }}</a></h3>
                 {% if assignment.deadline %}
-                    <span>(Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }})</span>
+                    <p style="font-size:0.9rem;">&#9201; Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
                 {% endif %}
                 {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-                    <a href="{% url 'assignment_update' course.pk module.pk lesson.pk assignment.pk %}">Редагувати</a>
-                    <a href="{% url 'assignment_delete' course.pk module.pk lesson.pk assignment.pk %}">Видалити</a>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <a href="{% url 'assignment_update' course.pk module.pk lesson.pk assignment.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>
+                        <a href="{% url 'assignment_delete' course.pk module.pk lesson.pk assignment.pk %}" class="btn btn-sm btn-danger">Видалити</a>
+                    </div>
                 {% endif %}
-            </li>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 {% else %}
-    <p>Завдань поки що немає.</p>
+    <div class="empty">Завдань поки що немає</div>
 {% endif %}
 
 {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <p><a href="{% url 'assignment_create' course.pk module.pk lesson.pk %}">+ Додати завдання</a></p>
+    <p><a href="{% url 'assignment_create' course.pk module.pk lesson.pk %}" class="btn btn-primary">+ Додати завдання</a></p>
 {% endif %}
 
 {% if user.is_authenticated and user.is_student %}
-    <h3>Мої відповіді на цьому уроці</h3>
+    <h3>Мої відповіді</h3>
     {% if user_submissions %}
-        <ul>
-            {% for sub in user_submissions %}
-                <li>
-                    <a href="{% url 'submission_detail' course.pk module.pk lesson.pk sub.assignment.pk sub.pk %}">
-                        Відповідь на "{{ sub.assignment.title }}"
-                    </a>
-                    — здано {{ sub.submitted_at|date:"d.m.Y H:i" }}
-                    {% if sub.grade %}
-                        <span><strong>Оцінка: {{ sub.grade.score }} / {{ sub.assignment.max_score }}</strong></span>
-                    {% else %}
-                        <span><em>На перевірці</em></span>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Завдання</th><th>Дата здачі</th><th>Статус</th></tr>
+                </thead>
+                <tbody>
+                    {% for sub in user_submissions %}
+                        <tr>
+                            <td><a href="{% url 'submission_detail' course.pk module.pk lesson.pk sub.assignment.pk sub.pk %}">{{ sub.assignment.title }}</a></td>
+                            <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if sub.grade %}
+                                    <span class="badge badge-accent">&#10003; {{ sub.grade.score }} / {{ sub.assignment.max_score }}</span>
+                                {% else %}
+                                    <span class="badge badge-muted">На перевірці</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>Ви ще не здали жодного завдання на цьому уроці.</p>
+        <div class="empty">Ви ще не здали жодного завдання</div>
     {% endif %}
 {% endif %}
 
-<hr>
-
-<div>
+<div class="nav-arrows">
     {% if prev_lesson %}
-        <a href="{{ prev_lesson.get_absolute_url }}">← Попередній урок: {{ prev_lesson.title }}</a>
+        <a href="{{ prev_lesson.get_absolute_url }}">&larr; {{ prev_lesson.title }}</a>
     {% else %}
-        <span>← Попередній урок немає</span>
+        <span style="color:var(--text-muted);">&larr; Попереднього уроку немає</span>
     {% endif %}
 
-    <span> | </span>
-
     {% if next_lesson %}
-        <a href="{{ next_lesson.get_absolute_url }}">Наступний урок: {{ next_lesson.title }} →</a>
+        <a href="{{ next_lesson.get_absolute_url }}">{{ next_lesson.title }} &rarr;</a>
     {% else %}
-        <span>Наступний урок немає →</span>
+        <span style="color:var(--text-muted);">Наступного уроку немає &rarr;</span>
     {% endif %}
 </div>
 
 {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
-    <hr>
-    <p>
-        <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}">Редагувати урок</a> |
-        <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}">Видалити урок</a>
-    </p>
+    <div style="margin-top:20px; display:flex; gap:8px;">
+        <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}" class="btn btn-secondary">Редагувати урок</a>
+        <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}" class="btn btn-danger">Видалити урок</a>
+    </div>
 {% endif %}
 {% endblock %}
