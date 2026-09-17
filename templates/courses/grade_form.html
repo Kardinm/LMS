@@ -7,7 +7,7 @@
     <h1>{% if is_update %}Оновити оцінку{% else %}Виставити оцінку{% endif %}</h1>
 
     <div class="card" style="background:var(--bg-input); margin-bottom:20px;">
-        <p><strong>Студент:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
+        <p><strong>Студент:</strong> <a href="{% url 'public_profile' submission.student.username %}">{{ submission.student.get_full_name|default:submission.student.username }}</a></p>
         <p><strong>Завдання:</strong> {{ assignment.title }}</p>
         <p><strong>Максимальний бал:</strong> <span class="badge badge-accent">{{ assignment.max_score }}</span></p>
         <p><strong>Дата здачі:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}</p>

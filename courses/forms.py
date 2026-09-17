@@ -121,7 +121,7 @@ class ModuleForm(forms.ModelForm):
 class LessonForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['title', 'lesson_type', 'content', 'video_url', 'order']
+        fields = ['title', 'lesson_type', 'content', 'video_url', 'file', 'order']
         widgets = {
             'content': forms.Textarea(attrs={'rows': 8}),
             'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/...'}),

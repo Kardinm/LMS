@@ -107,6 +107,10 @@ class Lesson(models.Model):
     title = models.CharField(max_length=255, verbose_name='Назва уроку')
     content = models.TextField(blank=True, verbose_name='Текстовий контент')
     video_url = models.URLField(blank=True, verbose_name='Посилання на відео')
+    file = models.FileField(
+        upload_to='lesson_materials/', blank=True, verbose_name='Файл уроку',
+        help_text='Необов’язково. Додайте конспект, презентацію, архів або інший навчальний матеріал.',
+    )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')

@@ -7,7 +7,8 @@
     <div class="card">
         <h1>{% if object %}Редагувати урок{% else %}Створити урок{% endif %}</h1>
         <p style="color:var(--text-muted);">{{ course.title }} &rarr; {{ module.title }}</p>
-        <form method="post">
+        <p>Текст, відеопосилання та файл можна додавати незалежно: оберіть один варіант або поєднайте всі.</p>
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit" class="btn btn-primary">{% if object %}Зберегти{% else %}Створити{% endif %}</button>

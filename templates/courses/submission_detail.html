@@ -6,7 +6,7 @@
 <div class="card">
     <h1>Відповідь студента</h1>
     <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
-        <span class="badge badge-muted">{{ submission.student.get_full_name|default:submission.student.username }}</span>
+        <span class="badge badge-muted"><a href="{% url 'public_profile' submission.student.username %}">{{ submission.student.get_full_name|default:submission.student.username }}</a></span>
         <span class="badge badge-muted">{{ submission.assignment.title }}</span>
         <span class="badge badge-muted">&#9201; {{ submission.submitted_at|date:"d.m.Y H:i" }}</span>
     </div>
@@ -31,7 +31,7 @@
             <div>{{ submission.grade.comment|linebreaks }}</div>
         {% endif %}
         <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">
-            Оцінено: {{ submission.grade.graded_at|date:"d.m.Y H:i" }} — {{ submission.grade.graded_by.get_full_name|default:submission.grade.graded_by.username }}
+            Оцінено: {{ submission.grade.graded_at|date:"d.m.Y H:i" }} — <a href="{% url 'public_profile' submission.grade.graded_by.username %}">{{ submission.grade.graded_by.get_full_name|default:submission.grade.graded_by.username }}</a>
         </p>
     </div>
 {% else %}

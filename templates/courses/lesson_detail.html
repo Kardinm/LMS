@@ -25,8 +25,16 @@
         </div>
     {% endif %}
 
+    {% if lesson.file %}
+        <section class="card" style="background:var(--bg-input); margin:16px 0;" aria-label="Файл уроку">
+            <h2>Навчальний файл</h2>
+            <p>Завантажте матеріал для роботи над уроком.</p>
+            <a href="{{ lesson.file.url }}" class="btn btn-secondary">Завантажити файл уроку</a>
+        </section>
+    {% endif %}
+
     {% if lesson.content %}
-        <h2>Контент</h2>
+        <h2>Матеріали уроку</h2>
         <div style="line-height:1.8;">{{ lesson.content|linebreaks }}</div>
     {% endif %}
 </div>

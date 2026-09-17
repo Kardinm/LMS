@@ -11,7 +11,7 @@
         {% for course in subscribed_courses %}
             <div class="card card-hover">
                 <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
-                <p>{{ course.author.get_full_name|default:course.author.username }}</p>
+                <p><a href="{% url 'public_profile' course.author.username %}">{{ course.author.get_full_name|default:course.author.username }}</a></p>
             </div>
         {% endfor %}
     </div>

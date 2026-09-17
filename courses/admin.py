@@ -50,7 +50,7 @@ class AssignmentInline(admin.TabularInline):
 class LessonInline(admin.TabularInline):
     model = Lesson
     extra = 1
-    fields = ['title', 'order', 'lesson_type', 'video_url']
+    fields = ['title', 'order', 'lesson_type', 'video_url', 'file']
 
 
 class ModuleInline(admin.TabularInline):
