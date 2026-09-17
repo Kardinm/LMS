@@ -3,15 +3,138 @@
 {% block title %}{% if object %}Редагувати курс{% else %}Створити курс{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-box">
-    <div class="card">
-        <h1>{% if object %}Редагувати курс{% else %}Створити курс{% endif %}</h1>
-        <form method="post">
+<div class="form-box form-box-wide">
+    <div class="card form-card">
+        <div class="page-heading">
+            <p class="eyebrow">Керування курсом</p>
+            <h1>{% if object %}Редагувати курс{% else %}Створити курс{% endif %}</h1>
+            <p>{% if object %}Оновіть основну інформацію та теги курсу.{% else %}Заповніть інформацію, за якою студенти знайдуть ваш курс.{% endif %}</p>
+        </div>
+
+        <form method="post" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">{% if object %}Зберегти зміни{% else %}Створити{% endif %}</button>
+            {{ form.non_field_errors }}
+
+            <div class="form-grid">
+                <div class="form-field form-field-full">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div class="form-field form-field-full">
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+            </div>
+
+            <section class="form-section tag-composer">
+                <div class="section-heading">
+                    <div>
+                        <h2>Теги</h2>
+                        <p>Використовуйте наявні теги або введіть новий. Кілька тегів розділяйте комою.</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-field form-field-full tag-input-wrap">
+                        {{ form.tags_input.label_tag }}
+                        {{ form.tags_input }}
+                        <div class="tag-suggestions" data-tag-suggestions hidden></div>
+                        {% if form.tags_input.help_text %}<small>{{ form.tags_input.help_text }}</small>{% endif %}
+                        {{ form.tags_input.errors }}
+                    </div>
+                    <div class="form-field">
+                        {{ form.tag_icon.label_tag }}
+                        {{ form.tag_icon }}
+                        {% if form.tag_icon.help_text %}<small>{{ form.tag_icon.help_text }}</small>{% endif %}
+                        {{ form.tag_icon.errors }}
+                    </div>
+                </div>
+            </section>
+
+            {% if not object %}
+                <section class="form-section completion-config">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Бейджик за проходження</h2>
+                            <p>Викладач вручну підтверджує завершення курсу учнем. Після цього бейджик з’явиться в його профілі.</p>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-field form-field-full">
+                            {{ form.completion_badge_name.label_tag }}
+                            {{ form.completion_badge_name }}
+                            {{ form.completion_badge_name.errors }}
+                        </div>
+                        <div class="form-field">
+                            {{ form.completion_badge_icon.label_tag }}
+                            {{ form.completion_badge_icon }}
+                            {{ form.completion_badge_icon.errors }}
+                        </div>
+                        <div class="form-field">
+                            {{ form.completion_badge_color.label_tag }}
+                            {{ form.completion_badge_color }}
+                            {{ form.completion_badge_color.errors }}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'course_list' %}{% endif %}" class="btn btn-secondary">Скасувати</a>
+                <button type="submit" class="btn btn-primary">{% if object %}Зберегти зміни{% else %}Створити курс{% endif %}</button>
+            </div>
         </form>
-        <p style="margin-top:16px;"><a href="{% url 'course_list' %}">&larr; Назад до списку</a></p>
     </div>
 </div>
+
+{{ tag_catalog|json_script:"course-tag-catalog" }}
+<script>
+(() => {
+    const catalogNode = document.getElementById('course-tag-catalog');
+    const input = document.getElementById('id_tags_input');
+    const suggestions = document.querySelector('[data-tag-suggestions]');
+    if (!catalogNode || !input || !suggestions) return;
+
+    const catalog = JSON.parse(catalogNode.textContent);
+    const currentPart = () => input.value.split(',').pop().trim().toLocaleLowerCase('uk');
+    const selectedNames = () => input.value.split(',').slice(0, -1).map(name => name.trim().toLocaleLowerCase('uk'));
+    const hideSuggestions = () => {
+        suggestions.hidden = true;
+        suggestions.replaceChildren();
+    };
+    const showSuggestions = () => {
+        const query = currentPart();
+        if (!query) return hideSuggestions();
+        const selected = selectedNames();
+        const matches = catalog.filter(tag => tag.name.toLocaleLowerCase('uk').includes(query) && !selected.includes(tag.name.toLocaleLowerCase('uk'))).slice(0, 6);
+        if (!matches.length) return hideSuggestions();
+        suggestions.replaceChildren();
+        matches.forEach(tag => {
+            const button = document.createElement('button');
+            const icon = document.createElement('span');
+            button.type = 'button';
+            button.className = 'tag-suggestion';
+            icon.textContent = tag.icon;
+            button.append(icon, document.createTextNode(tag.name));
+            button.addEventListener('mousedown', event => {
+                event.preventDefault();
+                const parts = input.value.split(',');
+                parts[parts.length - 1] = ` ${tag.name}`;
+                input.value = `${parts.join(',').replace(/^\s+/, '')}, `;
+                input.focus();
+                hideSuggestions();
+            });
+            suggestions.appendChild(button);
+        });
+        suggestions.hidden = false;
+    };
+    input.addEventListener('input', showSuggestions);
+    input.addEventListener('focus', showSuggestions);
+    input.addEventListener('blur', () => setTimeout(hideSuggestions, 150));
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Escape') hideSuggestions();
+    });
+})();
+</script>
 {% endblock %}

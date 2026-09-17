@@ -12,6 +12,8 @@ urlpatterns = [
     
     path('<int:pk>/subscribe/', CourseSubscribeView.as_view(), name='course_subscribe'),
     path('<int:pk>/unsubscribe/', CourseUnsubscribeView.as_view(), name='course_unsubscribe'),
+    path('<int:pk>/students/<int:student_pk>/complete/', CourseCompletionMarkView.as_view(), name='course_completion_mark'),
+    path('<int:pk>/students/<int:student_pk>/complete/remove/', CourseCompletionRemoveView.as_view(), name='course_completion_remove'),
     
     path('<int:course_pk>/module/add/', ModuleCreateView.as_view(), name='module_create'),
     path('<int:course_pk>/module/<int:module_pk>/edit/', ModuleUpdateView.as_view(), name='module_update'),

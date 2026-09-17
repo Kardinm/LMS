@@ -15,6 +15,11 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата створення')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата оновлення')
 
+    tags = models.ManyToManyField('CourseTag', blank=True, related_name='courses')
+    completion_badge_name = models.CharField(max_length=80, blank=True)
+    completion_badge_icon = models.CharField(max_length=8, blank=True, default='🏆')
+    completion_badge_color = models.CharField(max_length=7, blank=True, default='#6c63ff')
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Курс'
@@ -31,6 +36,16 @@ class Course(models.Model):
             return False
         
         return self.subscriptions.filter(student=user).exists()
+
+
+class CourseTag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
 
 
 class Module(models.Model):
@@ -55,6 +70,15 @@ class Module(models.Model):
 
 
 class Lesson(models.Model):
+    LESSON_TYPE_CHOICES = [
+        ('self_study', 'Самовивчення'),
+        ('video', 'Відеоурок'),
+        ('mixed', 'Змішаний'),
+        ('live', 'Онлайн-зустріч'),
+        ('practice', 'Практика'),
+    ]
+
+    lesson_type = models.CharField(max_length=20, choices=LESSON_TYPE_CHOICES, default='self_study')
     module = models.ForeignKey(
         Module,
         on_delete=models.CASCADE,

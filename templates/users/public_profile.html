@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Профіль {{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<h1>Профіль користувача</h1>
+<div class="card" style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+    <div style="flex-shrink:0;">
+        {% if profile_user.avatar %}
+            <img src="{{ profile_user.avatar.url }}" alt="Аватар" class="avatar avatar-lg">
+        {% else %}
+            <div class="avatar avatar-lg" style="background:var(--accent-light); display:flex; align-items:center; justify-content:center; color:var(--accent-dark); font-size:3rem; font-weight:700;">{{ profile_user.username|first|upper }}</div>
+        {% endif %}
+    </div>
+    <div style="flex:1; min-width:200px;">
+        <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+        <p><strong>Ім'я користувача:</strong> {{ profile_user.username }}</p>
+        <p><strong>Роль:</strong> <span class="badge badge-accent">{{ profile_user.get_role_display }}</span></p>
+        {% if profile_user.bio %}<p><strong>Про себе:</strong> {{ profile_user.bio }}</p>{% endif %}
+    </div>
+</div>
+
+{% if badges or completion_badges %}
+<h2>Титули та нагороди</h2>
+<div class="stats-grid">
+    {% for badge in badges %}
+        <div class="card"><span class="badge" style="background:{{ badge.color }}; color:#fff; font-size:1rem;">{{ badge.icon }} {{ badge.name }}</span><p>{{ badge.description }}</p></div>
+    {% endfor %}
+    {% for badge in completion_badges %}
+        <div class="card"><span class="badge" style="background:{{ badge.color }}; color:#fff; font-size:1rem;">{{ badge.icon }} {{ badge.name }}</span><p>{{ badge.description }}</p></div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if authored_courses %}
+<h2>Курси автора</h2>
+<div class="stats-grid">
+{% for course in authored_courses %}
+    <div class="card"><h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>{% for tag in course.tags.all %}<span class="badge badge-muted">{{ tag.name }}</span>{% endfor %}</div>
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

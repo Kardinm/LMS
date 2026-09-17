@@ -50,7 +50,7 @@
     </div>
 {% endif %}
 
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+{% if is_owner %}
     <h2>Відповіді студентів</h2>
     {% if all_submissions %}
         <div class="table-wrap">

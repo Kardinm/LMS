@@ -25,6 +25,14 @@
                 {% endfor %}
             </select>
         </div>
+        <div style="flex:1; min-width:150px;">
+            <select name="tag" id="tag">
+                <option value="">Усі теги</option>
+                {% for tag in tags %}
+                    <option value="{{ tag.pk }}" {% if selected_tag == tag.pk|stringformat:"s" %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <div>
             <button type="submit" class="btn btn-primary">Застосувати</button>
             <a href="{% url 'course_list' %}" class="btn btn-secondary">Скинути</a>
@@ -37,12 +45,13 @@
         {% for course in courses %}
             <div class="card card-hover">
                 <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
-                <p>{{ course.author.get_full_name|default:course.author.username }}</p>
+                <p><a href="{% url 'public_profile' course.author.username %}">{{ course.author.get_full_name|default:course.author.username }}</a></p>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
                     <span class="badge badge-muted">{{ course.modules.count }} модулів</span>
                     <span class="badge badge-accent">{{ course.subscriptions.count }} студентів</span>
                 </div>
-                {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">{% for tag in course.tags.all %}<span class="badge badge-muted"># {{ tag.name }}</span>{% endfor %}</div>
+                {% if user.is_authenticated and course.author == user %}
                     <div style="margin-top:12px; display:flex; gap:8px;">
                         <a href="{% url 'course_update' course.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>
                         <a href="{% url 'course_delete' course.pk %}" class="btn btn-sm btn-danger">Видалити</a>

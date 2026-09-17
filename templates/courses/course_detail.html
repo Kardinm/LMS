@@ -5,6 +5,7 @@
 {% block content %}
 <div class="card">
     <h1>{{ course.title }}</h1>
+    {% if course.tags.all %}<p>{% for tag in course.tags.all %}<span class="badge badge-muted"># {{ tag.name }}</span>{% endfor %}</p>{% endif %}
     <p><strong>Автор:</strong> {{ course.author.get_full_name|default:course.author.username }}</p>
     <p>{{ course.description|linebreaks }}</p>
     <p style="color:var(--text-muted); font-size:0.9rem;">Створено: {{ course.created_at|date:"d.m.Y" }}</p>
@@ -19,7 +20,7 @@
         {% endif %}
     {% endif %}
 
-    {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+    {% if is_owner %}
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
             <a href="{% url 'course_submissions' course.pk %}" class="btn btn-secondary">Здані роботи</a>
             <a href="{% url 'course_update' course.pk %}" class="btn btn-secondary">Редагувати</a>
@@ -43,7 +44,8 @@
                     {% for lesson in module.lessons.all %}
                         <li>
                             <a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a>
-                            {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                            <span class="badge badge-muted">{{ lesson.get_lesson_type_display }}</span>
+                            {% if is_owner %}
                                 <span>
                                     <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>
                                     <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}" class="btn btn-sm btn-danger">Видалити</a>
@@ -56,7 +58,7 @@
                 <p style="color:var(--text-muted);">Уроків поки що немає</p>
             {% endif %}
 
-            {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+            {% if is_owner %}
                 <div style="margin-top:12px; display:flex; gap:8px;">
                     <a href="{% url 'lesson_create' course.pk module.pk %}" class="btn btn-sm btn-primary">+ Додати урок</a>
                     <a href="{% url 'module_update' course.pk module.pk %}" class="btn btn-sm btn-secondary">Редагувати модуль</a>
@@ -69,7 +71,7 @@
     <div class="empty">Модулів поки що немає</div>
 {% endif %}
 
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+{% if is_owner %}
     <p><a href="{% url 'module_create' course.pk %}" class="btn btn-primary">+ Додати модуль</a></p>
 
     <h2>Підписані студенти</h2>

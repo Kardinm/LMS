@@ -25,7 +25,7 @@ class AssignmentInline(admin.TabularInline):
 class LessonInline(admin.TabularInline):
     model = Lesson
     extra = 1
-    fields = ['title', 'order', 'video_url']
+    fields = ['title', 'order', 'lesson_type', 'video_url']
 
 
 class ModuleInline(admin.TabularInline):
@@ -37,7 +37,8 @@ class ModuleInline(admin.TabularInline):
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ['title', 'author', 'created_at', 'updated_at']
-    list_filter = ['created_at', 'author']
+    list_filter = ['created_at', 'author', 'tags']
+    filter_horizontal = ['tags']
     search_fields = ['title', 'description']
     inlines = [ModuleInline]
 
@@ -52,7 +53,7 @@ class ModuleAdmin(admin.ModelAdmin):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ['title', 'module', 'order', 'created_at']
+    list_display = ['title', 'module', 'lesson_type', 'order', 'created_at']
     list_filter = ['module__course', 'module']
     search_fields = ['title', 'content']
     inlines = [AssignmentInline]
@@ -79,3 +80,8 @@ class GradeAdmin(admin.ModelAdmin):
     list_display = ['submission', 'score', 'graded_by', 'graded_at']
     list_filter = ['graded_at', 'graded_by']
     search_fields = ['submission__student__username', 'comment']
+
+
+@admin.register(CourseTag)
+class CourseTagAdmin(admin.ModelAdmin):
+    search_fields = ['name']

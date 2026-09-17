@@ -40,7 +40,7 @@
                 {% if assignment.deadline %}
                     <p style="font-size:0.9rem;">&#9201; Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
                 {% endif %}
-                {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+                {% if is_owner %}
                     <div style="display:flex; gap:8px; margin-top:8px;">
                         <a href="{% url 'assignment_update' course.pk module.pk lesson.pk assignment.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>
                         <a href="{% url 'assignment_delete' course.pk module.pk lesson.pk assignment.pk %}" class="btn btn-sm btn-danger">Видалити</a>
@@ -53,7 +53,7 @@
     <div class="empty">Завдань поки що немає</div>
 {% endif %}
 
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+{% if is_owner %}
     <p><a href="{% url 'assignment_create' course.pk module.pk lesson.pk %}" class="btn btn-primary">+ Додати завдання</a></p>
 {% endif %}
 
@@ -101,7 +101,7 @@
     {% endif %}
 </div>
 
-{% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_admin_role %}
+{% if is_owner %}
     <div style="margin-top:20px; display:flex; gap:8px;">
         <a href="{% url 'lesson_update' course.pk module.pk lesson.pk %}" class="btn btn-secondary">Редагувати урок</a>
         <a href="{% url 'lesson_delete' course.pk module.pk lesson.pk %}" class="btn btn-danger">Видалити урок</a>
