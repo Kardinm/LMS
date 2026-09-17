@@ -16,7 +16,7 @@ def get_profile_badges(profile_user):
 
     badges = []
     subscriptions = profile_user.subscriptions.count()
-    submissions = profile_user.submissions.count()
+    submissions = profile_user.submissions.filter(grade__isnull=False).count()
     excellent_grades = Grade.objects.filter(
         submission__student=profile_user,
         score__gte=F('submission__assignment__max_score') * 0.9,

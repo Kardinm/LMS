@@ -30,6 +30,8 @@ class UserRegisterForm(UserCreationForm):
 
 
 class UserUpdateForm(forms.ModelForm):
+    avatar = forms.ImageField(required=False, label='Аватар')
+    
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'birth_date', 'avatar']

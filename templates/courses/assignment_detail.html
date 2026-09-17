@@ -15,7 +15,7 @@
 
     <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:12px;">
         {% if assignment.deadline %}
-            <span class="badge badge-muted">&#9201; Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }}</span>
+            <span class="badge badge-muted">&#9201; Кінцевий термін: {{ assignment.deadline|date:"d.m.Y H:i" }}</span>
         {% endif %}
         <span class="badge badge-accent">Макс. бал: {{ assignment.max_score }}</span>
     </div>
@@ -61,7 +61,7 @@
                 <tbody>
                     {% for sub in all_submissions %}
                         <tr>
-                            <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+                            <td><a href="{% url 'public_profile' sub.student.username %}">{{ sub.student.get_full_name|default:sub.student.username }}</a></td>
                             <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
                             <td>{% if sub.grade %}<span class="badge badge-accent">Оцінено</span>{% else %}<span class="badge badge-muted">На перевірці</span>{% endif %}</td>
                             <td>{% if sub.grade %}{{ sub.grade.score }} / {{ assignment.max_score }}{% else %}—{% endif %}</td>

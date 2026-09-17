@@ -6,7 +6,7 @@
 <p><a href="{{ course.get_absolute_url }}">&larr; Назад до курсу {{ course.title }}</a></p>
 
 <div class="card">
-    <h1>{{ lesson.title }}</h1>
+    <h1>{{ lesson.title }}</h1><span class="badge badge-accent">{{ lesson.get_lesson_type_display }}</span>
     <p><strong>Модуль:</strong> {{ module.title }}</p>
 
     {% if user.is_authenticated and user.is_student %}

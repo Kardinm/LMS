@@ -5,9 +5,10 @@
 {% block content %}
 <div class="card">
     <h1>{{ course.title }}</h1>
-    {% if course.tags.all %}<p>{% for tag in course.tags.all %}<span class="badge badge-muted"># {{ tag.name }}</span>{% endfor %}</p>{% endif %}
-    <p><strong>Автор:</strong> {{ course.author.get_full_name|default:course.author.username }}</p>
-    <p>{{ course.description|linebreaks }}</p>
+     {% if course.tags.all %}<p>{% for tag in course.tags.all %}<span class="badge badge-muted">{{ tag.icon }} {{ tag.name }}</span>{% endfor %}</p>{% endif %}
+    <p><strong>Автор:</strong> <a href="{% url 'public_profile' course.author.username %}">{{ course.author.get_full_name|default:course.author.username }}</a></p>
+    <div>{{ course.description|linebreaks }}</div>
+    {% if course.completion_badge_name %}<p><span class="badge badge-accent">{{ course.completion_badge_icon }} {{ course.completion_badge_name }}</span> — нагорода за проходження після підтвердження викладачем.</p>{% endif %}
     <p style="color:var(--text-muted); font-size:0.9rem;">Створено: {{ course.created_at|date:"d.m.Y" }}</p>
 
     {% if user.is_authenticated %}

@@ -4,16 +4,38 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 )
-from django.conf import settings
-from django.apps import apps
 from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.views import View
+from django.db import transaction
+from .models import CourseCompletion
 
 from .models import Course, CourseTag, Module, Lesson, Assignment, Submission, Grade
 from users.models import Subscription
 from .forms import *
 
+
+class NestedCourseMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if 'course_pk' in kwargs:
+            course = get_object_or_404(Course, pk=kwargs['course_pk'])
+            if 'module_pk' in kwargs:
+                module = get_object_or_404(Module, pk=kwargs['module_pk'], course=course)
+            if 'lesson_pk' in kwargs:
+                lesson = get_object_or_404(Lesson, pk=kwargs['lesson_pk'], module=module)
+            if 'assignment_pk' in kwargs:
+                assignment = get_object_or_404(Assignment, pk=kwargs['assignment_pk'], lesson=lesson)
+            if 'submission_pk' in kwargs:
+                get_object_or_404(Submission, pk=kwargs['submission_pk'], assignment=assignment)
+        return super().dispatch(request, *args, **kwargs)
+
+
+class TagCatalogMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag_catalog'] = list(CourseTag.objects.values('name', 'icon'))
+        return context
 
 class TeacherOrAdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -42,13 +64,11 @@ class SubscriptionRequiredMixin(UserPassesTestMixin):
         user = self.request.user
         if not user.is_authenticated:
             return False
-        if user.is_teacher() or user.is_admin_role():
-            return True
         
         course_pk = self.kwargs.get('course_pk') or self.kwargs.get('pk')
         if course_pk:
             course = get_object_or_404(Course, pk=course_pk)
-            return course.is_subscribed(user)
+            return is_course_owner(user, course) or course.is_subscribed(user)
         
         return False
 
@@ -70,79 +90,32 @@ class CourseListView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
-        qs = Course.objects.all().select_related('author')
+        qs = Course.objects.select_related('author').prefetch_related('tags')
+        query = self.request.GET.get('q', '').strip()
+        if query:
+            qs = qs.filter(Q(title__icontains=query) | Q(description__icontains=query) | Q(author__username__icontains=query))
 
-        search = self.request.GET.get('q')
-        if search:
-            qs = qs.filter(
-                Q(title__icontains=search) |
-                Q(description__icontains=search) |
-                Q(author__username__icontains=search) |
-                Q(author__first_name__icontains=search) |
-                Q(author__last_name__icontains=search)
-            )
-
-        author_id = self.request.GET.get('author')
-        if author_id:
-            qs = qs.filter(author_id=author_id)
-
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        User = settings.AUTH_USER_MODEL
-        UserModel = apps.get_model('users', 'User')
-        context['teachers'] = UserModel.objects.filter(
-            role__in=['teacher', 'admin']
-        ).order_by('username')
-    
-        context['get_params'] = self.request.GET.urlencode()
-        return context
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        form = CourseSearchForm(self.request.GET)
-        if form.is_valid():
-            q = form.cleaned_data.get('q')
-            author = form.cleaned_data.get('author')
-            if q:
-                qs = qs.filter(title__icontains=q)
-            if author:
-                qs = qs.filter(author=author)
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_form'] = CourseSearchForm(self.request.GET or None)
-        return context
-
-    def get_queryset(self):
-        qs = super().get_queryset().select_related('author').prefetch_related('tags')
-        search = self.request.GET.get('q')
-        author = self.request.GET.get('author')
-        tag = self.request.GET.get('tag')
-
-        if search:
-            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
-        if author:
-            qs = qs.filter(author_id=author)
-        if tag:
-            qs = qs.filter(tags__pk=tag)
+        for param, field in [('author', 'author_id'), ('tag', 'tags__pk')]:
+            value = self.request.GET.get(param)
+            if value:
+                if not value.isdecimal() or len(value) > 18:
+                    return qs.none()
+                qs = qs.filter(**{field: int(value)})
             
         return qs.distinct()
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
         from users.models import User
-        context['teachers'] = User.objects.filter(
-            Q(role='teacher') | Q(role='admin')
-        ).distinct()
-        context['search_query'] = self.request.GET.get('q', '')
-        context['selected_author'] = self.request.GET.get('author', '')
-        context['tags'] = CourseTag.objects.all()
-        context['selected_tag'] = self.request.GET.get('tag', '')
-        context['get_params'] = self.request.GET.urlencode()
+
+        context = super().get_context_data(**kwargs)
+        context.update(teachers=User.objects.filter(courses__isnull=False).distinct(),
+                       tags=CourseTag.objects.all(), search_query=self.request.GET.get('q', ''),
+                       selected_author=self.request.GET.get('author', ''),
+                       selected_tag=self.request.GET.get('tag', ''))
+        params = self.request.GET.copy()
+        params.pop('page', None)
+        context['get_params'] = params.urlencode()
+
         return context
 
 
@@ -161,11 +134,12 @@ class CourseDetailView(DetailView):
 
         if context['is_owner']:
             context['subscribed_students'] = course.subscriptions.select_related('student').all()
+            context['completed_student_ids'] = set(course.completions.values_list('student_id', flat=True))
 
         return context
 
 
-class CourseCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+class CourseCreateView(TagCatalogMixin, LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
     model = Course
     form_class = CourseCreateForm
     template_name = 'courses/course_form.html'
@@ -177,7 +151,7 @@ class CourseCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateVi
         return super().form_valid(form)
 
 
-class CourseUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
+class CourseUpdateView(TagCatalogMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
     model = Course
     form_class = CourseForm
     template_name = 'courses/course_form.html'
@@ -193,15 +167,18 @@ class CourseDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView)
     template_name = 'courses/course_confirm_delete.html'
     success_url = reverse_lazy('course_list')
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Курс видалено!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        messages.success(self.request, 'Курс видалено!')
+        return super().form_valid(form)
 
 
 class CourseSubscribeView(LoginRequiredMixin, CreateView):
     template_name = 'courses/course_subscribe.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.course = get_object_or_404(Course, pk=self.kwargs['pk'])
         if not request.user.is_student():
             messages.error(request, 'Тільки студенти можуть підписуватися на курси.')
@@ -214,7 +191,7 @@ class CourseSubscribeView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        Subscription.objects.create(student=request.user, course=self.course)
+        Subscription.objects.get_or_create(student=request.user, course=self.course)
         messages.success(request, f'Ви підписалися на курс "{self.course.title}"!')
         return redirect(self.course.get_absolute_url())
 
@@ -226,6 +203,9 @@ class CourseUnsubscribeView(LoginRequiredMixin, CreateView):
     template_name = 'courses/course_unsubscribe.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.course = get_object_or_404(Course, pk=self.kwargs['pk'])
         if not request.user.is_student():
             messages.error(request, 'Тільки студенти можуть відписуватися від курсів.')
@@ -247,12 +227,15 @@ class CourseUnsubscribeView(LoginRequiredMixin, CreateView):
 
 
 # модулі
-class ModuleCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+class ModuleCreateView(NestedCourseMixin, LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
     model = Module
     form_class = ModuleForm
     template_name = 'courses/module_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.course = get_object_or_404(Course, pk=self.kwargs['course_pk'])
         if not is_course_owner(request.user, self.course):
             return HttpResponseForbidden('Лише автор курсу може змінювати його вміст.')
@@ -272,7 +255,7 @@ class ModuleCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateVi
         return context
 
 
-class ModuleUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
+class ModuleUpdateView(NestedCourseMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
     model = Module
     form_class = ModuleForm
     template_name = 'courses/module_form.html'
@@ -287,7 +270,7 @@ class ModuleUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView)
         return super().form_valid(form)
 
 
-class ModuleDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
+class ModuleDeleteView(NestedCourseMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
     model = Module
     template_name = 'courses/module_confirm_delete.html'
     pk_url_kwarg = 'module_pk'
@@ -296,13 +279,13 @@ class ModuleDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView)
     def get_success_url(self):
         return self.object.course.get_absolute_url()
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Модуль видалено!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        messages.success(self.request, 'Модуль видалено!')
+        return super().form_valid(form)
 
 
 #уроки
-class LessonDetailView(SubscriptionRequiredMixin, DetailView):
+class LessonDetailView(NestedCourseMixin, SubscriptionRequiredMixin, DetailView):
     model = Lesson
     template_name = 'courses/lesson_detail.html'
     context_object_name = 'lesson'
@@ -344,12 +327,15 @@ class LessonDetailView(SubscriptionRequiredMixin, DetailView):
         return context
 
 
-class LessonCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+class LessonCreateView(NestedCourseMixin,LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
     model = Lesson
     form_class = LessonForm
     template_name = 'courses/lesson_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.module = get_object_or_404(Module, pk=self.kwargs['module_pk'])
         if not is_course_owner(request.user, self.module.course):
             return HttpResponseForbidden('Лише автор курсу може змінювати його вміст.')
@@ -370,7 +356,7 @@ class LessonCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateVi
         return context
 
 
-class LessonUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
+class LessonUpdateView(NestedCourseMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
     model = Lesson
     form_class = LessonForm
     template_name = 'courses/lesson_form.html'
@@ -391,7 +377,7 @@ class LessonUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView)
         return context
 
 
-class LessonDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
+class LessonDeleteView(NestedCourseMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
     model = Lesson
     template_name = 'courses/lesson_confirm_delete.html'
     pk_url_kwarg = 'lesson_pk'
@@ -400,13 +386,13 @@ class LessonDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView)
     def get_success_url(self):
         return self.object.module.course.get_absolute_url()
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Урок видалено!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        messages.success(self.request, 'Урок видалено!')
+        return super().form_valid(form)
 
 
 #завдання
-class AssignmentDetailView(SubscriptionRequiredMixin, DetailView):
+class AssignmentDetailView(NestedCourseMixin, SubscriptionRequiredMixin, DetailView):
     model = Assignment
     template_name = 'courses/assignment_detail.html'
     context_object_name = 'assignment'
@@ -441,12 +427,15 @@ class AssignmentDetailView(SubscriptionRequiredMixin, DetailView):
         return context
 
 
-class AssignmentCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+class AssignmentCreateView(NestedCourseMixin, LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
     model = Assignment
     form_class = AssignmentForm
     template_name = 'courses/assignment_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.lesson = get_object_or_404(Lesson, pk=self.kwargs['lesson_pk'])
         if not is_course_owner(request.user, self.lesson.module.course):
             return HttpResponseForbidden('Лише автор курсу може змінювати його вміст.')
@@ -468,7 +457,7 @@ class AssignmentCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, Crea
         return context
 
 
-class AssignmentUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
+class AssignmentUpdateView(NestedCourseMixin, LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateView):
     model = Assignment
     form_class = AssignmentForm
     template_name = 'courses/assignment_form.html'
@@ -490,7 +479,7 @@ class AssignmentUpdateView(LoginRequiredMixin, CourseOwnerRequiredMixin, UpdateV
         return context
 
 
-class AssignmentDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
+class AssignmentDeleteView(NestedCourseMixin,LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteView):
     model = Assignment
     template_name = 'courses/assignment_confirm_delete.html'
     pk_url_kwarg = 'assignment_pk'
@@ -499,19 +488,24 @@ class AssignmentDeleteView(LoginRequiredMixin, CourseOwnerRequiredMixin, DeleteV
     def get_success_url(self):
         return self.object.lesson.get_absolute_url()
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Завдання видалено!')
-        return super().delete(request, *args, **kwargs)
+    def form_valid(self, form):
+        messages.success(self.request, 'Завдання видалено!')
+        return super().form_valid(form)
 
 
 #відповіді
-class SubmissionCreateView(LoginRequiredMixin, SubscriptionRequiredMixin, CreateView):
+class SubmissionCreateView(NestedCourseMixin, LoginRequiredMixin, SubscriptionRequiredMixin, CreateView):
     model = Submission
     form_class = SubmissionForm
     template_name = 'courses/submission_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.assignment = get_object_or_404(Assignment, pk=self.kwargs['assignment_pk'])
+        if not request.user.is_student() or not self.assignment.lesson.module.course.is_subscribed(request.user):
+            return HttpResponseForbidden('Здавати завдання можуть лише підписані студенти.')
         if Submission.objects.filter(assignment=self.assignment, student=request.user).exists():
             messages.warning(request, 'Ви вже здали це завдання.')
             return redirect(self.assignment.get_absolute_url())
@@ -536,7 +530,7 @@ class SubmissionCreateView(LoginRequiredMixin, SubscriptionRequiredMixin, Create
         return context
 
 
-class SubmissionDetailView(LoginRequiredMixin, DetailView):
+class SubmissionDetailView(NestedCourseMixin,LoginRequiredMixin, DetailView):
     model = Submission
     template_name = 'courses/submission_detail.html'
     context_object_name = 'submission'
@@ -544,21 +538,21 @@ class SubmissionDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        if self.request.user.is_student():
-            qs = qs.filter(student=self.request.user)
-        elif self.request.user.is_teacher() or self.request.user.is_admin_role():
-            qs = qs.filter(assignment__lesson__module__course__author=self.request.user)
+        qs = qs.filter(Q(student=self.request.user) | Q(assignment__lesson__module__course__author=self.request.user))
 
         return qs
 
 
 #оцінки
-class GradeCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
+class GradeCreateView(NestedCourseMixin, LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateView):
     model = Grade
     form_class = GradeForm
     template_name = 'courses/grade_form.html'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         self.submission = get_object_or_404(Submission, pk=self.kwargs['submission_pk'])
         if self.submission.assignment.lesson.module.course.author != request.user:
             return HttpResponseForbidden('Ви не автор цього курсу.')
@@ -595,11 +589,13 @@ class GradeCreateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, CreateVie
         return context
 
 
-class GradeUpdateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, UpdateView):
+class GradeUpdateView(NestedCourseMixin, LoginRequiredMixin, TeacherOrAdminRequiredMixin, UpdateView):
     model = Grade
     form_class = GradeForm
     template_name = 'courses/grade_form.html'
-    pk_url_kwarg = 'grade_pk'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Grade, submission_id=self.kwargs['submission_pk'])
 
     def dispatch(self, request, *args, **kwargs):
         grade = self.get_object()
@@ -630,6 +626,28 @@ class GradeUpdateView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, UpdateVie
         context['is_update'] = True
         return context
 
+
+class CourseCompletionMarkView(LoginRequiredMixin, View):
+    @transaction.atomic
+    def post(self, request, pk, student_pk):
+        course = get_object_or_404(Course.objects.select_for_update(), pk=pk, author=request.user)
+        subscription = get_object_or_404(Subscription, course=course, student_id=student_pk)
+        assignments = Assignment.objects.filter(lesson__module__course=course)
+        done = Submission.objects.filter(assignment__in=assignments, student=subscription.student, grade__isnull=False).count()
+        if not assignments.exists() or done != assignments.count():
+            messages.error(request, 'Спочатку учень має здати всі завдання курсу, а викладач — оцінити їх.')
+        else:
+            CourseCompletion.objects.get_or_create(course=course, student=subscription.student, defaults={'confirmed_by': request.user})
+            messages.success(request, 'Проходження курсу підтверджено. Бейджик доступний у профілі учня.')
+        return redirect(course)
+
+
+class CourseCompletionRemoveView(LoginRequiredMixin, View):
+    def post(self, request, pk, student_pk):
+        course = get_object_or_404(Course, pk=pk, author=request.user)
+        CourseCompletion.objects.filter(course=course, student_id=student_pk).delete()
+        messages.success(request, 'Підтвердження проходження скасовано.')
+        return redirect(course)
 
 #дашборд вчителя
 class TeacherDashboardView(LoginRequiredMixin, TeacherOrAdminRequiredMixin, TemplateView):

@@ -96,7 +96,7 @@
     const suggestions = document.querySelector('[data-tag-suggestions]');
     if (!catalogNode || !input || !suggestions) return;
 
-    const catalog = JSON.parse(catalogNode.textContent);
+    const catalog = JSON.parse(catalogNode.textContent) || [];
     const currentPart = () => input.value.split(',').pop().trim().toLocaleLowerCase('uk');
     const selectedNames = () => input.value.split(',').slice(0, -1).map(name => name.trim().toLocaleLowerCase('uk'));
     const hideSuggestions = () => {
@@ -117,7 +117,7 @@
             button.className = 'tag-suggestion';
             icon.textContent = tag.icon;
             button.append(icon, document.createTextNode(tag.name));
-            button.addEventListener('mousedown', event => {
+            button.addEventListener('click', event => {
                 event.preventDefault();
                 const parts = input.value.split(',');
                 parts[parts.length - 1] = ` ${tag.name}`;
@@ -131,9 +131,15 @@
     };
     input.addEventListener('input', showSuggestions);
     input.addEventListener('focus', showSuggestions);
-    input.addEventListener('blur', () => setTimeout(hideSuggestions, 150));
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.tag-input-wrap')) hideSuggestions();
+    });
     input.addEventListener('keydown', event => {
         if (event.key === 'Escape') hideSuggestions();
+        if (event.key === 'ArrowDown' && !suggestions.hidden) {
+            event.preventDefault();
+            suggestions.querySelector('button')?.focus();
+        }
     });
 })();
 </script>

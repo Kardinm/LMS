@@ -724,3 +724,33 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Shared layout for course creation, profiles and small screens. */
+.form-box-wide { max-width: 840px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.form-field-full { grid-column: 1 / -1; }
+.form-section { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--border); }
+.form-actions, .student-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.form-actions { justify-content: flex-end; margin-top: 28px; }
+.student-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.student-row form { margin-left: auto; }
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; font-weight: 700; color: var(--accent-dark); }
+.form-field small { display: block; margin-top: 6px; color: var(--text-muted); }
+.errorlist { color: #a51d2d; padding: 8px 0; list-style: none; margin: 0; font-size: .9rem; }
+.tag-input-wrap { position: relative; }
+.tag-suggestions { position: absolute; z-index: 5; top: 76px; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); overflow: hidden; }
+.tag-suggestion { display: flex; gap: 10px; width: 100%; padding: 12px 16px; border: 0; background: white; text-align: left; cursor: pointer; font: inherit; }
+.tag-suggestion:hover, .tag-suggestion:focus { background: var(--accent-light); }
+input[type=color] { width: 100%; min-height: 46px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); }
+:focus-visible { outline: 3px solid var(--accent-hover); outline-offset: 3px; }
+.card { overflow-wrap: anywhere; }
+.card-hover { transition: transform .2s, box-shadow .2s; }
+.stats-grid:has(.card-hover) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+@media (max-width: 600px) {
+ .form-grid { grid-template-columns: 1fr; }
+ .form-box .card { padding: 20px; }
+ .form-actions .btn { flex: 1; }
+ .pagination { flex-wrap: wrap; }
+ .student-row form { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }

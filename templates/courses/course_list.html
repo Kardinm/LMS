@@ -13,10 +13,10 @@
     <h3>Пошук та фільтри</h3>
     <form method="get" class="search-bar">
         <div style="flex:2; min-width:200px;">
-            <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Пошук за назвою, описом або автором...">
+             <input type="text" aria-label="Пошук курсів" name="q" value="{{ request.GET.q }}" placeholder="Пошук за назвою, описом або автором...">
         </div>
         <div style="flex:1; min-width:150px;">
-            <select name="author" id="author">
+            <select aria-label="Викладач" name="author" id="author">
                 <option value="">Всі викладачі</option>
                 {% for teacher in teachers %}
                     <option value="{{ teacher.pk }}" {% if request.GET.author == teacher.pk|stringformat:"s" %}selected{% endif %}>
@@ -26,7 +26,7 @@
             </select>
         </div>
         <div style="flex:1; min-width:150px;">
-            <select name="tag" id="tag">
+            <select aria-label="Тег курсу" name="tag" id="tag">
                 <option value="">Усі теги</option>
                 {% for tag in tags %}
                     <option value="{{ tag.pk }}" {% if selected_tag == tag.pk|stringformat:"s" %}selected{% endif %}>{{ tag.name }}</option>
@@ -50,7 +50,7 @@
                     <span class="badge badge-muted">{{ course.modules.count }} модулів</span>
                     <span class="badge badge-accent">{{ course.subscriptions.count }} студентів</span>
                 </div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">{% for tag in course.tags.all %}<span class="badge badge-muted"># {{ tag.name }}</span>{% endfor %}</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">{% for tag in course.tags.all %}<span class="badge badge-muted">{{ tag.icon }} {{ tag.name }}</span>{% endfor %}</div>
                 {% if user.is_authenticated and course.author == user %}
                     <div style="margin-top:12px; display:flex; gap:8px;">
                         <a href="{% url 'course_update' course.pk %}" class="btn btn-sm btn-secondary">Редагувати</a>

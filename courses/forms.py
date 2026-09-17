@@ -1,3 +1,4 @@
+import re
 from django import forms
 from users.models import User
 from .models import *
@@ -53,7 +54,7 @@ class CourseForm(forms.ModelForm):
             name = name.strip()
             if name:
                 tag, _ = CourseTag.objects.get_or_create(
-                    name__iexact=name,
+                    normalized_name=name.casefold(),
                     defaults={'name': name, 'icon': icon},
                 )
                 tags.append(tag)
@@ -63,7 +64,7 @@ class CourseForm(forms.ModelForm):
         names = []
         seen = set()
         for raw_name in self.cleaned_data['tags_input'].split(','):
-            name = raw_name.strip()
+            name = ' '.join(raw_name.split())
             key = name.casefold()
             if name and key not in seen:
                 if len(name) > 50:
@@ -103,7 +104,7 @@ class CourseCreateForm(CourseForm):
 
     def clean_completion_badge_color(self):
         color = self.cleaned_data['completion_badge_color']
-        if color and (len(color) != 7 or not color.startswith('#') or any(char not in '0123456789abcdefABCDEF#' for char in color)):
+        if color and not re.fullmatch(r'#[0-9a-fA-F]{6}', color):
             raise forms.ValidationError('Вкажіть колір у форматі #RRGGBB.')
         return color
 
@@ -138,6 +139,13 @@ class AssignmentForm(forms.ModelForm):
 
 
 class SubmissionForm(forms.ModelForm):
+    def clean(self):
+        data = super().clean()
+        if not data.get('text', '').strip() and not data.get('file'):
+            raise forms.ValidationError('Додайте текстову відповідь або файл.')
+        
+        return data
+    
     class Meta:
         model = Submission
         fields = ['text', 'file']
@@ -156,9 +164,16 @@ class GradeForm(forms.ModelForm):
 
     def __init__(self, *args, max_score=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if max_score:
+        self.max_score = max_score
+        if max_score is not None:
             self.fields['score'].widget.attrs['max'] = max_score
             self.fields['score'].widget.attrs['min'] = 0
+
+    def clean_score(self):
+        score = self.cleaned_data['score']
+        if self.max_score is not None and score > self.max_score:
+            raise forms.ValidationError(f'Бал не може перевищувати {self.max_score}.')
+        return score
 
 
 class CourseSearchForm(forms.Form):

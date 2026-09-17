@@ -9,7 +9,7 @@
         <p><strong>{{ assignment.title }}</strong></p>
         <p style="color:var(--text-muted);">{{ course.title }} &rarr; {{ lesson.title }}</p>
         {% if assignment.deadline %}
-            <p>&#9201; Дедлайн: {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
+            <p>&#9201; Кінцевий термін: {{ assignment.deadline|date:"d.m.Y H:i" }}</p>
         {% endif %}
         <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
         <form method="post" enctype="multipart/form-data">
